@@ -1,0 +1,3580 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>MatchForm — Date by Questions</title>
+  <style>
+    :root {
+      --bg1: #ff9a9e;
+      --bg2: #fad0c4;
+      --bg3: #fbc2eb;
+      --card: rgba(255, 255, 255, 0.92);
+      --card-soft: linear-gradient(135deg, #fff5f8, #f8f0ff);
+      --text: #2d2d2d;
+      --text-soft: #5a3a5a;
+      --text-mute: #8a6a8a;
+      --accent1: #d63384;
+      --accent2: #6f42c1;
+      --accent3: #ff6b9d;
+      --border: #f0d0e0;
+      --input-bg: white;
+      --shadow: rgba(0, 0, 0, 0.08);
+      --tab-bg: rgba(255, 255, 255, 0.7);
+      --success: #28a745;
+      --warning: #ffc107;
+      --danger: #dc3545;
+      --gold: #ffd700;
+    }
+
+    [data-theme="dark"] {
+      --bg1: #2a1a3a;
+      --bg2: #1a1a2e;
+      --bg3: #3a1a4a;
+      --card: rgba(40, 30, 60, 0.92);
+      --card-soft: linear-gradient(135deg, #2a1a3a, #3a1a4a);
+      --text: #f0e0f0;
+      --text-soft: #d0b0d0;
+      --text-mute: #a080a0;
+      --accent1: #ff5fa2;
+      --accent2: #a78bfa;
+      --accent3: #ff8ec7;
+      --border: #4a3a5a;
+      --input-bg: #2a1a3a;
+      --shadow: rgba(0, 0, 0, 0.3);
+      --tab-bg: rgba(40, 30, 60, 0.7);
+      --success: #4ade80;
+      --warning: #fbbf24;
+      --danger: #f87171;
+      --gold: #fbbf24;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: linear-gradient(135deg, var(--bg1) 0%, var(--bg2) 50%, var(--bg3) 100%);
+      background-attachment: fixed;
+      min-height: 100vh;
+      color: var(--text);
+      padding: 20px;
+      transition: background 0.4s ease, color 0.3s ease;
+    }
+
+    .app {
+      max-width: 780px;
+      margin: 0 auto;
+    }
+
+    header {
+      text-align: center;
+      padding: 20px 0 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    .brand {
+      text-align: left;
+      flex: 1;
+    }
+
+    .brand h1 {
+      font-size: 2.4rem;
+      background: linear-gradient(135deg, var(--accent1), var(--accent2));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      letter-spacing: -1px;
+    }
+
+    .brand p {
+      color: var(--text-soft);
+      margin-top: 4px;
+      font-size: 0.9rem;
+    }
+
+    .header-actions {
+      display: flex;
+      gap: 8px;
+    }
+
+    .theme-toggle,
+    .stats-toggle {
+      background: var(--card);
+      border: none;
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      cursor: pointer;
+      font-size: 1.2rem;
+      box-shadow: 0 4px 12px var(--shadow);
+      transition: transform 0.2s;
+      position: relative;
+    }
+
+    .theme-toggle:hover,
+    .stats-toggle:hover {
+      transform: rotate(20deg) scale(1.1);
+    }
+
+    .tabs {
+      display: flex;
+      background: var(--tab-bg);
+      backdrop-filter: blur(10px);
+      border-radius: 16px;
+      padding: 6px;
+      margin-bottom: 20px;
+      box-shadow: 0 4px 20px var(--shadow);
+      gap: 4px;
+      overflow-x: auto;
+    }
+
+    .tab {
+      flex: 1;
+      min-width: 80px;
+      padding: 12px 8px;
+      text-align: center;
+      cursor: pointer;
+      border-radius: 12px;
+      font-weight: 600;
+      color: var(--text-soft);
+      transition: all 0.25s ease;
+      user-select: none;
+      font-size: 0.95rem;
+      white-space: nowrap;
+    }
+
+    .tab.active {
+      background: linear-gradient(135deg, var(--accent1), var(--accent2));
+      color: white;
+      box-shadow: 0 4px 12px rgba(214, 51, 132, 0.35);
+    }
+
+    .tab .badge-count {
+      display: inline-block;
+      background: white;
+      color: var(--accent1);
+      border-radius: 10px;
+      padding: 1px 7px;
+      font-size: 0.7rem;
+      margin-left: 4px;
+      font-weight: 700;
+    }
+
+    .panel {
+      background: var(--card);
+      backdrop-filter: blur(10px);
+      border-radius: 20px;
+      padding: 24px;
+      box-shadow: 0 10px 40px var(--shadow);
+      display: none;
+    }
+
+    .panel.active {
+      display: block;
+      animation: fadeIn 0.3s ease;
+    }
+
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+        transform: translateY(10px);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    label {
+      display: block;
+      font-weight: 600;
+      margin: 14px 0 6px;
+      color: var(--text-soft);
+      font-size: 0.9rem;
+    }
+
+    input[type="text"],
+    input[type="number"],
+    input[type="email"],
+    input[type="date"],
+    input[type="time"],
+    textarea,
+    select {
+      width: 100%;
+      padding: 12px 14px;
+      border: 2px solid var(--border);
+      border-radius: 12px;
+      font-size: 1rem;
+      background: var(--input-bg);
+      color: var(--text);
+      transition: border 0.2s;
+      font-family: inherit;
+    }
+
+    input:focus,
+    textarea:focus,
+    select:focus {
+      outline: none;
+      border-color: var(--accent1);
+    }
+
+    textarea {
+      resize: vertical;
+      min-height: 70px;
+    }
+
+    button {
+      padding: 12px 20px;
+      border: none;
+      border-radius: 12px;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+      font-family: inherit;
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, var(--accent1), var(--accent2));
+      color: white;
+      box-shadow: 0 4px 12px rgba(214, 51, 132, 0.3);
+    }
+
+    .btn-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 16px rgba(214, 51, 132, 0.4);
+    }
+
+    .btn-secondary {
+      background: var(--input-bg);
+      color: var(--accent1);
+      border: 2px solid var(--accent1);
+    }
+
+    .btn-secondary:hover {
+      background: var(--card-soft);
+    }
+
+    .btn-danger {
+      background: #ff4d6d;
+      color: white;
+      padding: 8px 14px;
+      font-size: 0.85rem;
+    }
+
+    .btn-ghost {
+      background: transparent;
+      color: var(--text-soft);
+      padding: 8px 14px;
+      font-size: 0.85rem;
+    }
+
+    .btn-ghost:hover {
+      color: var(--accent1);
+    }
+
+    .btn-gold {
+      background: linear-gradient(135deg, var(--gold), #ffa500);
+      color: #5a4000;
+      box-shadow: 0 4px 12px rgba(255, 215, 0, 0.4);
+    }
+
+    .btn-gold:hover {
+      transform: translateY(-2px);
+    }
+
+    .btn-icon {
+      background: transparent;
+      border: none;
+      padding: 6px;
+      cursor: pointer;
+      font-size: 1.1rem;
+      border-radius: 8px;
+      transition: background 0.2s;
+    }
+
+    .btn-icon:hover {
+      background: var(--border);
+    }
+
+    /* Avatar */
+    .avatar {
+      width: 56px;
+      height: 56px;
+      border-radius: 50%;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-weight: 700;
+      font-size: 1.3rem;
+      flex-shrink: 0;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+      letter-spacing: 1px;
+      position: relative;
+    }
+
+    .avatar.sm {
+      width: 36px;
+      height: 36px;
+      font-size: 0.9rem;
+    }
+
+    .avatar.lg {
+      width: 80px;
+      height: 80px;
+      font-size: 1.8rem;
+    }
+
+    /* Question card - creation */
+    .question-card {
+      background: var(--card-soft);
+      border-radius: 14px;
+      padding: 16px;
+      margin-top: 12px;
+      border-left: 4px solid var(--accent1);
+      position: relative;
+      transition: all 0.2s;
+    }
+
+    .question-card.dragging {
+      opacity: 0.5;
+      transform: scale(0.98);
+    }
+
+    .question-card.drag-over {
+      border-top: 3px solid var(--accent2);
+    }
+
+    .question-card.dealbreaker {
+      border-left-color: var(--danger);
+    }
+
+    .question-card .q-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 10px;
+    }
+
+    .question-card .drag-handle {
+      cursor: grab;
+      color: var(--text-mute);
+      padding: 4px;
+      font-size: 1.2rem;
+      user-select: none;
+    }
+
+    .question-card .drag-handle:active {
+      cursor: grabbing;
+    }
+
+    .question-card .q-text {
+      font-weight: 600;
+      color: var(--text);
+      flex: 1;
+    }
+
+    .question-card .q-meta {
+      font-size: 0.8rem;
+      color: var(--text-mute);
+      margin-top: 6px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+
+    .question-card .q-actions {
+      display: flex;
+      gap: 4px;
+      margin-top: 8px;
+    }
+
+    .question-card .q-actions button {
+      padding: 4px 10px;
+      font-size: 0.75rem;
+      border-radius: 8px;
+      background: var(--input-bg);
+      border: 1px solid var(--border);
+      color: var(--text-soft);
+      cursor: pointer;
+    }
+
+    .question-card .q-actions button:hover {
+      border-color: var(--accent1);
+      color: var(--accent1);
+    }
+
+    .pill {
+      display: inline-block;
+      padding: 2px 8px;
+      background: var(--border);
+      color: var(--text-soft);
+      border-radius: 10px;
+      font-size: 0.72rem;
+      font-weight: 600;
+    }
+
+    .pill.dealbreaker {
+      background: var(--danger);
+      color: white;
+    }
+
+    .pill.weight-2 {
+      background: var(--warning);
+      color: #5a4000;
+    }
+
+    .pill.weight-3 {
+      background: var(--accent2);
+      color: white;
+    }
+
+    .pill.category {
+      background: #e0d4ff;
+      color: var(--accent2);
+    }
+
+    [data-theme="dark"] .pill.category {
+      background: #3a2a5a;
+      color: #c0a8ff;
+    }
+
+    .pill.optional {
+      background: #d4edda;
+      color: #155724;
+    }
+
+    [data-theme="dark"] .pill.optional {
+      background: #1a3a2a;
+      color: #7ee09a;
+    }
+
+    /* Tags */
+    .tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-top: 8px;
+    }
+
+    .tag {
+      background: var(--border);
+      color: var(--text-soft);
+      padding: 4px 10px;
+      border-radius: 12px;
+      font-size: 0.75rem;
+      font-weight: 500;
+    }
+
+    .tag.interest {
+      background: linear-gradient(135deg, #ffe0ec, #f0e6ff);
+      color: var(--accent1);
+    }
+
+    [data-theme="dark"] .tag.interest {
+      background: linear-gradient(135deg, #3a1a3a, #2a1a4a);
+    }
+
+    /* Profile grid */
+    .profile-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+      gap: 14px;
+    }
+
+    .profile-card {
+      background: var(--card-soft);
+      border-radius: 16px;
+      padding: 18px;
+      box-shadow: 0 4px 16px var(--shadow);
+      transition: transform 0.2s;
+      cursor: pointer;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      position: relative;
+    }
+
+    .profile-card:hover {
+      transform: translateY(-3px);
+    }
+
+    .profile-card .p-head {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .profile-card h3 {
+      color: var(--accent1);
+      font-size: 1.15rem;
+    }
+
+    .profile-card .views {
+      font-size: 0.75rem;
+      color: var(--text-mute);
+    }
+
+    .profile-card .bio {
+      color: var(--text-soft);
+      font-size: 0.9rem;
+      line-height: 1.4;
+      flex: 1;
+    }
+
+    .profile-card .stats {
+      display: flex;
+      gap: 10px;
+      font-size: 0.8rem;
+      color: var(--text-mute);
+      flex-wrap: wrap;
+    }
+
+    .badge {
+      display: inline-block;
+      padding: 3px 10px;
+      background: #ffe0ec;
+      color: var(--accent1);
+      border-radius: 20px;
+      font-size: 0.72rem;
+      font-weight: 600;
+    }
+
+    [data-theme="dark"] .badge {
+      background: #3a1a3a;
+    }
+
+    .badge.match {
+      background: #d4edda;
+      color: #155724;
+    }
+
+    .badge.fail {
+      background: #f8d7da;
+      color: #721c24;
+    }
+
+    .badge.premium {
+      background: linear-gradient(135deg, var(--gold), #ffa500);
+      color: #5a4000;
+    }
+
+    [data-theme="dark"] .badge.match {
+      background: #1a3a2a;
+      color: #7ee09a;
+    }
+
+    [data-theme="dark"] .badge.fail {
+      background: #3a1a1a;
+      color: #ff8090;
+    }
+
+    .empty-state {
+      text-align: center;
+      padding: 40px 20px;
+      color: var(--text-mute);
+    }
+
+    .empty-state .emoji {
+      font-size: 3rem;
+      margin-bottom: 10px;
+    }
+
+    .threshold-box {
+      background: var(--card-soft);
+      border-radius: 12px;
+      padding: 14px;
+      margin-top: 16px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .threshold-box input {
+      width: 80px;
+    }
+
+    /* Templates */
+    .templates {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin: 10px 0 16px;
+    }
+
+    .template-btn {
+      background: var(--input-bg);
+      border: 2px solid var(--border);
+      color: var(--text-soft);
+      padding: 6px 12px;
+      border-radius: 20px;
+      font-size: 0.82rem;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .template-btn:hover {
+      border-color: var(--accent1);
+      color: var(--accent1);
+    }
+
+    /* Template category tabs */
+    .template-tabs {
+      display: flex;
+      gap: 6px;
+      margin-bottom: 10px;
+      flex-wrap: wrap;
+    }
+
+    .template-tab {
+      background: var(--input-bg);
+      border: 1px solid var(--border);
+      color: var(--text-soft);
+      padding: 4px 10px;
+      border-radius: 12px;
+      font-size: 0.78rem;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .template-tab.active {
+      background: var(--accent1);
+      color: white;
+      border-color: var(--accent1);
+    }
+
+    /* Search & filters */
+    .search-bar {
+      position: relative;
+      margin-bottom: 12px;
+    }
+
+    .search-bar input {
+      padding-left: 40px;
+    }
+
+    .search-bar::before {
+      content: "🔍";
+      position: absolute;
+      left: 14px;
+      top: 50%;
+      transform: translateY(-50%);
+      font-size: 0.9rem;
+    }
+
+    .filter-bar {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 16px;
+      flex-wrap: wrap;
+    }
+
+    .filter-chip {
+      background: var(--input-bg);
+      border: 2px solid var(--border);
+      color: var(--text-soft);
+      padding: 6px 12px;
+      border-radius: 20px;
+      font-size: 0.82rem;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .filter-chip:hover {
+      border-color: var(--accent1);
+    }
+
+    .filter-chip.active {
+      background: var(--accent1);
+      color: white;
+      border-color: var(--accent1);
+    }
+
+    /* Progress bar */
+    .progress-wrap {
+      background: var(--card-soft);
+      border-radius: 14px;
+      padding: 14px 16px;
+      margin-bottom: 16px;
+      position: sticky;
+      top: 0;
+      z-index: 5;
+      box-shadow: 0 4px 12px var(--shadow);
+    }
+
+    .progress-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 8px;
+      font-size: 0.85rem;
+    }
+
+    .progress-header .progress-label {
+      color: var(--text-soft);
+      font-weight: 600;
+    }
+
+    .progress-header .progress-count {
+      color: var(--text-mute);
+    }
+
+    .progress-bar {
+      background: var(--border);
+      height: 8px;
+      border-radius: 4px;
+      overflow: hidden;
+    }
+
+    .progress-fill {
+      height: 100%;
+      background: linear-gradient(90deg, var(--accent1), var(--accent2));
+      border-radius: 4px;
+      transition: width 0.4s ease;
+    }
+
+    .progress-meta {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 6px;
+      font-size: 0.75rem;
+      color: var(--text-mute);
+    }
+
+    /* Step-by-step form */
+    .step-form {
+      position: relative;
+    }
+
+    .step-question {
+      animation: slideInRight 0.3s ease;
+    }
+
+    @keyframes slideInRight {
+      from {
+        opacity: 0;
+        transform: translateX(20px);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateX(0);
+      }
+    }
+
+    .step-question.slide-out {
+      animation: slideOutLeft 0.3s ease forwards;
+    }
+
+    @keyframes slideOutLeft {
+      from {
+        opacity: 1;
+        transform: translateX(0);
+      }
+
+      to {
+        opacity: 0;
+        transform: translateX(-20px);
+      }
+    }
+
+    .step-question.slide-back {
+      animation: slideInLeft 0.3s ease;
+    }
+
+    @keyframes slideInLeft {
+      from {
+        opacity: 0;
+        transform: translateX(-20px);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateX(0);
+      }
+    }
+
+    /* Card-based MC selection */
+    .mc-options {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 8px;
+      margin-top: 8px;
+    }
+
+    .mc-option {
+      background: var(--input-bg);
+      border: 2px solid var(--border);
+      border-radius: 12px;
+      padding: 12px 14px;
+      cursor: pointer;
+      transition: all 0.2s;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 0.95rem;
+      color: var(--text);
+    }
+
+    .mc-option:hover {
+      border-color: var(--accent1);
+      transform: translateX(4px);
+    }
+
+    .mc-option.selected {
+      border-color: var(--accent1);
+      background: linear-gradient(135deg, #fff0f6, #f0e6ff);
+      color: var(--accent1);
+      font-weight: 600;
+    }
+
+    [data-theme="dark"] .mc-option.selected {
+      background: linear-gradient(135deg, #3a1a3a, #2a1a4a);
+    }
+
+    .mc-option .radio {
+      width: 20px;
+      height: 20px;
+      border: 2px solid var(--border);
+      border-radius: 50%;
+      flex-shrink: 0;
+      position: relative;
+      transition: all 0.2s;
+    }
+
+    .mc-option.selected .radio {
+      border-color: var(--accent1);
+    }
+
+    .mc-option.selected .radio::after {
+      content: "";
+      position: absolute;
+      inset: 3px;
+      background: var(--accent1);
+      border-radius: 50%;
+      animation: popIn 0.2s ease;
+    }
+
+    @keyframes popIn {
+      from {
+        transform: scale(0);
+      }
+
+      to {
+        transform: scale(1);
+      }
+    }
+
+    .mc-option .checkbox {
+      width: 20px;
+      height: 20px;
+      border: 2px solid var(--border);
+      border-radius: 6px;
+      flex-shrink: 0;
+      position: relative;
+      transition: all 0.2s;
+    }
+
+    .mc-option.selected .checkbox {
+      border-color: var(--accent1);
+      background: var(--accent1);
+    }
+
+    .mc-option.selected .checkbox::after {
+      content: "✓";
+      position: absolute;
+      inset: 0;
+      color: white;
+      font-size: 0.8rem;
+      font-weight: bold;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    /* Yes/No toggle */
+    .yesno-toggle {
+      display: flex;
+      gap: 10px;
+      margin-top: 8px;
+    }
+
+    .yesno-btn {
+      flex: 1;
+      padding: 14px;
+      border: 2px solid var(--border);
+      border-radius: 12px;
+      background: var(--input-bg);
+      cursor: pointer;
+      font-size: 1rem;
+      font-weight: 600;
+      color: var(--text-soft);
+      transition: all 0.2s;
+      text-align: center;
+    }
+
+    .yesno-btn:hover {
+      border-color: var(--accent1);
+    }
+
+    .yesno-btn.selected {
+      border-color: var(--accent1);
+      background: linear-gradient(135deg, #fff0f6, #f0e6ff);
+      color: var(--accent1);
+    }
+
+    [data-theme="dark"] .yesno-btn.selected {
+      background: linear-gradient(135deg, #3a1a3a, #2a1a4a);
+    }
+
+    /* Step navigation */
+    .step-nav {
+      display: flex;
+      gap: 10px;
+      margin-top: 20px;
+    }
+
+    .step-nav button {
+      flex: 1;
+    }
+
+    .step-dots {
+      display: flex;
+      justify-content: center;
+      gap: 6px;
+      margin: 16px 0;
+      flex-wrap: wrap;
+    }
+
+    .step-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: var(--border);
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .step-dot.answered {
+      background: var(--accent2);
+    }
+
+    .step-dot.current {
+      background: var(--accent1);
+      transform: scale(1.3);
+    }
+
+    .step-dot.skipped {
+      background: var(--warning);
+    }
+
+    /* Review screen */
+    .review-list {
+      background: var(--card-soft);
+      border-radius: 14px;
+      padding: 16px;
+      margin-top: 16px;
+    }
+
+    .review-item {
+      padding: 12px;
+      border-bottom: 1px solid var(--border);
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+
+    .review-item:hover {
+      background: var(--input-bg);
+    }
+
+    .review-item:last-child {
+      border-bottom: none;
+    }
+
+    .review-item .review-q {
+      font-weight: 600;
+      color: var(--text);
+      font-size: 0.95rem;
+    }
+
+    .review-item .review-a {
+      color: var(--text-soft);
+      font-size: 0.85rem;
+      margin-top: 4px;
+    }
+
+    .review-item.unanswered .review-a {
+      color: var(--warning);
+      font-style: italic;
+    }
+
+    .review-item .review-status {
+      float: right;
+      font-size: 1.1rem;
+    }
+
+    /* Bulk import */
+    .bulk-import {
+      background: var(--card-soft);
+      border-radius: 14px;
+      padding: 16px;
+      margin-top: 12px;
+      border: 2px dashed var(--border);
+    }
+
+    .bulk-import textarea {
+      min-height: 120px;
+      font-family: monospace;
+      font-size: 0.85rem;
+    }
+
+    /* Conditional logic */
+    .condition-box {
+      background: #fff3cd;
+      border: 1px solid #ffc107;
+      border-radius: 10px;
+      padding: 10px;
+      margin-top: 8px;
+      font-size: 0.85rem;
+      color: #5a4000;
+    }
+
+    [data-theme="dark"] .condition-box {
+      background: #3a2a1a;
+      border-color: #fbbf24;
+      color: #fbbf24;
+    }
+
+    /* Question hint */
+    .q-hint {
+      font-size: 0.8rem;
+      color: var(--text-mute);
+      font-style: italic;
+      margin-top: 4px;
+    }
+
+    /* Character counter */
+    .char-counter {
+      text-align: right;
+      font-size: 0.75rem;
+      color: var(--text-mute);
+      margin-top: 4px;
+    }
+
+    .char-counter.warn {
+      color: var(--warning);
+    }
+
+    .char-counter.over {
+      color: var(--danger);
+    }
+
+    /* Draft banner */
+    .draft-banner {
+      background: linear-gradient(135deg, #fff3cd, #ffe69c);
+      border: 1px solid #ffc107;
+      border-radius: 12px;
+      padding: 12px 16px;
+      margin-bottom: 14px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+      font-size: 0.9rem;
+      color: #5a4000;
+    }
+
+    [data-theme="dark"] .draft-banner {
+      background: linear-gradient(135deg, #3a2a1a, #2a1a0a);
+      border-color: #fbbf24;
+      color: #fbbf24;
+    }
+
+    .draft-banner button {
+      padding: 6px 12px;
+      font-size: 0.8rem;
+      border-radius: 8px;
+    }
+
+    /* Preview mode */
+    .preview-banner {
+      background: linear-gradient(135deg, var(--accent2), var(--accent1));
+      color: white;
+      border-radius: 12px;
+      padding: 12px 16px;
+      margin-bottom: 14px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+    }
+
+    /* Confetti */
+    .confetti-piece {
+      position: fixed;
+      width: 10px;
+      height: 10px;
+      top: -20px;
+      pointer-events: none;
+      z-index: 9999;
+      animation: confetti-fall linear forwards;
+    }
+
+    @keyframes confetti-fall {
+      to {
+        transform: translateY(110vh) rotate(720deg);
+      }
+    }
+
+    /* Settings */
+    .settings-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 12px 0;
+      border-bottom: 1px solid var(--border);
+      gap: 10px;
+    }
+
+    .settings-row:last-child {
+      border-bottom: none;
+    }
+
+    .divider {
+      height: 1px;
+      background: linear-gradient(90deg, transparent, var(--border), transparent);
+      margin: 20px 0;
+    }
+
+    .back-btn {
+      background: transparent;
+      color: var(--accent1);
+      padding: 8px 0;
+      margin-bottom: 10px;
+      font-weight: 600;
+    }
+
+    .back-btn:hover {
+      color: var(--accent2);
+    }
+
+    .row {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+    }
+
+    .row>* {
+      flex: 1;
+    }
+
+    .toast {
+      position: fixed;
+      bottom: 30px;
+      left: 50%;
+      transform: translateX(-50%) translateY(100px);
+      background: var(--text);
+      color: var(--input-bg);
+      padding: 12px 24px;
+      border-radius: 30px;
+      font-weight: 500;
+      box-shadow: 0 8px 24px var(--shadow);
+      transition: transform 0.3s ease;
+      z-index: 100;
+      max-width: 90%;
+      text-align: center;
+    }
+
+    .toast.show {
+      transform: translateX(-50%) translateY(0);
+    }
+
+    /* Stats */
+    .stats-panel {
+      background: var(--card-soft);
+      border-radius: 16px;
+      padding: 20px;
+      margin-bottom: 20px;
+    }
+
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+      gap: 16px;
+      margin-top: 16px;
+    }
+
+    .stat-card {
+      background: var(--input-bg);
+      border-radius: 12px;
+      padding: 16px;
+      text-align: center;
+    }
+
+    .stat-card .stat-value {
+      font-size: 2rem;
+      font-weight: 700;
+      background: linear-gradient(135deg, var(--accent1), var(--accent2));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .stat-card .stat-label {
+      font-size: 0.85rem;
+      color: var(--text-mute);
+      margin-top: 4px;
+    }
+
+    .achievements {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+      gap: 12px;
+      margin-top: 16px;
+    }
+
+    .achievement {
+      background: var(--input-bg);
+      border-radius: 12px;
+      padding: 14px;
+      text-align: center;
+      border: 2px solid var(--border);
+      transition: all 0.3s;
+    }
+
+    .achievement.unlocked {
+      border-color: var(--gold);
+      background: linear-gradient(135deg, #fff8e1, #fff3cd);
+      box-shadow: 0 4px 12px rgba(255, 215, 0, 0.3);
+    }
+
+    [data-theme="dark"] .achievement.unlocked {
+      background: linear-gradient(135deg, #3a2a1a, #2a1a0a);
+    }
+
+    .achievement .ach-icon {
+      font-size: 2rem;
+      margin-bottom: 6px;
+    }
+
+    .achievement .ach-name {
+      font-weight: 600;
+      font-size: 0.85rem;
+      color: var(--text);
+    }
+
+    .achievement .ach-desc {
+      font-size: 0.75rem;
+      color: var(--text-mute);
+      margin-top: 4px;
+    }
+
+    .achievement.locked {
+      opacity: 0.5;
+      filter: grayscale(1);
+    }
+
+    .daily-challenge {
+      background: linear-gradient(135deg, var(--accent1), var(--accent2));
+      color: white;
+      border-radius: 16px;
+      padding: 20px;
+      margin-bottom: 20px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .daily-challenge::before {
+      content: "";
+      position: absolute;
+      top: -50%;
+      right: -50%;
+      width: 200%;
+      height: 200%;
+      background: radial-gradient(circle, rgba(255, 255, 255, 0.1) 0%, transparent 70%);
+      animation: rotate 20s linear infinite;
+    }
+
+    @keyframes rotate {
+      from {
+        transform: rotate(0deg);
+      }
+
+      to {
+        transform: rotate(360deg);
+      }
+    }
+
+    .daily-challenge h3 {
+      position: relative;
+      z-index: 1;
+      margin-bottom: 8px;
+    }
+
+    .daily-challenge p {
+      position: relative;
+      z-index: 1;
+      opacity: 0.9;
+      font-size: 0.9rem;
+    }
+
+    .daily-challenge .reward {
+      position: relative;
+      z-index: 1;
+      margin-top: 12px;
+      font-weight: 600;
+    }
+
+    .level-bar {
+      background: var(--border);
+      height: 8px;
+      border-radius: 4px;
+      overflow: hidden;
+      margin-top: 8px;
+    }
+
+    .level-fill {
+      height: 100%;
+      background: linear-gradient(90deg, var(--accent1), var(--accent2));
+      border-radius: 4px;
+      transition: width 0.6s ease;
+    }
+
+    /* Modal */
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.5);
+      backdrop-filter: blur(4px);
+      z-index: 1000;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+
+    .modal-overlay.show {
+      display: flex;
+      animation: fadeIn 0.2s ease;
+    }
+
+    .modal {
+      background: var(--card);
+      border-radius: 20px;
+      padding: 24px;
+      max-width: 500px;
+      width: 100%;
+      max-height: 85vh;
+      overflow-y: auto;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+      animation: slideUp 0.3s ease;
+    }
+
+    @keyframes slideUp {
+      from {
+        transform: translateY(30px);
+        opacity: 0;
+      }
+
+      to {
+        transform: translateY(0);
+        opacity: 1;
+      }
+    }
+
+    .modal h3 {
+      color: var(--accent1);
+      margin-bottom: 12px;
+    }
+
+    .modal-close {
+      float: right;
+      background: transparent;
+      border: none;
+      font-size: 1.5rem;
+      cursor: pointer;
+      color: var(--text-mute);
+      line-height: 1;
+    }
+
+    .modal-close:hover {
+      color: var(--danger);
+    }
+
+    .inline-edit-input {
+      width: 100%;
+      padding: 8px 10px;
+      border: 2px solid var(--accent1);
+      border-radius: 8px;
+      background: var(--input-bg);
+      color: var(--text);
+      font-size: 1rem;
+      font-weight: 600;
+    }
+
+    @media (max-width: 500px) {
+      header {
+        flex-wrap: wrap;
+      }
+
+      .brand h1 {
+        font-size: 1.9rem;
+      }
+
+      .panel {
+        padding: 18px;
+      }
+
+      .tab {
+        padding: 10px 4px;
+        font-size: 0.82rem;
+      }
+
+      .profile-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="app">
+    <header>
+      <div class="brand">
+        <h1>💘 MatchForm</h1>
+        <p>Ask questions. Earn dates. Find your person.</p>
+      </div>
+      <div class="header-actions">
+        <button class="stats-toggle" onclick="switchTab('stats')" title="Your Stats">📊</button>
+        <button class="theme-toggle" onclick="toggleTheme()" id="themeBtn" title="Toggle theme">🌙</button>
+      </div>
+    </header>
+
+    <div class="tabs">
+      <div class="tab active" data-tab="create">✨ Create</div>
+      <div class="tab" data-tab="browse">🔍 Browse</div>
+      <div class="tab" data-tab="favorites">⭐ Favs <span class="badge-count" id="favCount" style="display:none">0</span>
+      </div>
+      <div class="tab" data-tab="matches">💌 Matches <span class="badge-count" id="matchCount"
+          style="display:none">0</span></div>
+      <div class="tab" data-tab="chat">💬 Chat <span class="badge-count" id="chatCount" style="display:none">0</span>
+      </div>
+      <div class="tab" data-tab="stats">📊 Stats</div>
+      <div class="tab" data-tab="settings">⚙️</div>
+    </div>
+
+    <!-- CREATE PANEL -->
+    <div class="panel active" id="panel-create">
+      <h2 style="color:var(--text); margin-bottom:4px;">Your Profile</h2>
+      <p style="color:var(--text-mute); font-size:0.9rem;">Set the questions people must answer to win a date with you.
+      </p>
+
+      <div style="display:flex; gap:14px; align-items:center; margin-top:14px;">
+        <div class="avatar lg" id="myAvatar">?</div>
+        <div style="flex:1;">
+          <label style="margin-top:0;">Your Name</label>
+          <input type="text" id="myName" placeholder="e.g. Alex" />
+        </div>
+      </div>
+
+      <label>Short Bio</label>
+      <textarea id="myBio" placeholder="Tell people a bit about you..."></textarea>
+
+      <label>Your Interests (comma separated)</label>
+      <input type="text" id="myInterests" placeholder="e.g. hiking, coffee, movies, gaming" />
+
+      <div class="divider"></div>
+
+      <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
+        <div>
+          <h3 style="color:var(--text);">Your Questions</h3>
+          <p style="color:var(--text-mute); font-size:0.85rem; margin-top:4px;">Drag to reorder · Click to edit · Build
+            your perfect form</p>
+        </div>
+        <div style="display:flex; gap:6px;">
+          <button class="btn-secondary" style="padding:8px 12px; font-size:0.82rem;" onclick="togglePreview()">👁️
+            Preview</button>
+          <button class="btn-secondary" style="padding:8px 12px; font-size:0.82rem;" onclick="showBulkImport()">📥
+            Bulk</button>
+        </div>
+      </div>
+
+      <div id="previewBanner" style="display:none;"></div>
+
+      <div style="margin-top:12px;">
+        <label style="margin-top:0;">💡 Question templates</label>
+        <div class="template-tabs" id="templateTabs"></div>
+        <div class="templates" id="templates"></div>
+      </div>
+
+      <div id="questionList"></div>
+
+      <div id="bulkImportArea" style="display:none;"></div>
+
+      <div style="margin-top:16px; padding:16px; background:var(--card-soft); border-radius:14px;">
+        <label style="margin-top:0;">Question Text</label>
+        <input type="text" id="newQText" placeholder="e.g. Do you believe in love at first sight?" />
+
+        <label>Hint (optional, shown to respondent)</label>
+        <input type="text" id="newQHint" placeholder="e.g. Be honest! This matters to me." />
+
+        <div class="row" style="margin-top:10px;">
+          <div>
+            <label style="margin-top:0;">Type</label>
+            <select id="newQType">
+              <option value="yesno">Yes / No</option>
+              <option value="mc">Multiple Choice</option>
+              <option value="mc-multi">Multiple Choice (select many)</option>
+              <option value="text">Free Text</option>
+              <option value="scale">Scale (1-5)</option>
+            </select>
+          </div>
+          <div>
+            <label style="margin-top:0;">Category</label>
+            <select id="newQCat">
+              <option value="fun">🎉 Fun</option>
+              <option value="deep">🌙 Deep</option>
+              <option value="values">💎 Values</option>
+              <option value="dealbreaker">💥 Dealbreaker</option>
+            </select>
+          </div>
+          <div>
+            <label style="margin-top:0;">Importance</label>
+            <select id="newQWeight">
+              <option value="1">1x — Nice to know</option>
+              <option value="2">2x — Important</option>
+              <option value="3">3x — Critical</option>
+            </select>
+          </div>
+        </div>
+
+        <div id="mcOptionsWrap" style="display:none; margin-top:10px;">
+          <label>Options (comma separated)</label>
+          <input type="text" id="newQOptions" placeholder="e.g. Inception, The Matrix, Titanic" />
+          <label>Correct Answer(s) (comma separated for multi-select)</label>
+          <input type="text" id="newQCorrect" placeholder="e.g. The Matrix" />
+        </div>
+
+        <div id="yesnoWrap" style="margin-top:10px;">
+          <label>Correct Answer</label>
+          <select id="newQYesNo">
+            <option value="yes">Yes</option>
+            <option value="no">No</option>
+          </select>
+        </div>
+
+        <div id="scaleWrap" style="display:none; margin-top:10px;">
+          <label>Correct Value (1-5)</label>
+          <input type="number" id="newQScale" min="1" max="5" value="3" />
+        </div>
+
+        <div id="textWrap" style="display:none; margin-top:10px;">
+          <label>Max characters (0 = unlimited)</label>
+          <input type="number" id="newQCharLimit" min="0" value="0" />
+          <label style="margin-top:8px;">Keywords to accept (comma separated, optional)</label>
+          <input type="text" id="newQKeywords" placeholder="e.g. love, family, travel" />
+        </div>
+
+        <div style="margin-top:10px;">
+          <label style="margin-top:0;">Conditional (optional)</label>
+          <select id="newQCondition">
+            <option value="">No condition — always show</option>
+          </select>
+          <div style="font-size:0.75rem; color:var(--text-mute); margin-top:4px;">Only show this question if a previous
+            answer matches</div>
+        </div>
+
+        <div style="display:flex; gap:12px; margin-top:12px; flex-wrap:wrap;">
+          <label style="display:flex; align-items:center; gap:8px; cursor:pointer; margin:0;">
+            <input type="checkbox" id="newQDealbreaker" style="width:auto;" />
+            <span>💥 Dealbreaker</span>
+          </label>
+          <label style="display:flex; align-items:center; gap:8px; cursor:pointer; margin:0;">
+            <input type="checkbox" id="newQRequired" style="width:auto;" checked />
+            <span>Required</span>
+          </label>
+          <label style="display:flex; align-items:center; gap:8px; cursor:pointer; margin:0;">
+            <input type="checkbox" id="newQAutoPass" style="width:auto;" />
+            <span>Auto-pass (no wrong answer)</span>
+          </label>
+        </div>
+
+        <button class="btn-secondary" style="margin-top:14px; width:100%;" onclick="addQuestion()">+ Add
+          Question</button>
+      </div>
+
+      <div class="threshold-box">
+        <div style="flex:1;">
+          <div style="font-weight:600; color:var(--text);">Pass Threshold</div>
+          <div style="font-size:0.8rem; color:var(--text-mute);">Minimum weighted % to earn a date</div>
+        </div>
+        <input type="number" id="threshold" min="0" max="100" value="70" />
+        <span style="font-weight:600; color:var(--accent1);">%</span>
+      </div>
+
+      <button class="btn-primary" style="width:100%; margin-top:18px;" onclick="saveProfile()">💾 Save My
+        Profile</button>
+    </div>
+
+    <!-- BROWSE PANEL -->
+    <div class="panel" id="panel-browse">
+      <div class="search-bar">
+        <input type="text" id="searchInput" placeholder="Search by name, bio, or interest..."
+          oninput="renderBrowse()" />
+      </div>
+      <div class="filter-bar" id="filterBar">
+        <div class="filter-chip active" data-filter="all">All</div>
+        <div class="filter-chip" data-filter="unanswered">🆕 Unanswered</div>
+        <div class="filter-chip" data-filter="favorites">⭐ Favorites</div>
+        <div class="filter-chip" data-filter="premium">⭐ Premium</div>
+        <div class="filter-chip" data-filter="verified">✓ Verified</div>
+      </div>
+      <div id="browseList"></div>
+    </div>
+
+    <!-- FAVORITES PANEL -->
+    <div class="panel" id="panel-favorites">
+      <h2 style="color:var(--text); margin-bottom:4px;">⭐ Your Favorites</h2>
+      <p style="color:var(--text-mute); font-size:0.9rem;">Profiles you've saved for later.</p>
+      <div class="divider"></div>
+      <div id="favoritesList"></div>
+    </div>
+
+    <!-- ANSWER PANEL -->
+    <div class="panel" id="panel-answer" style="display:none;">
+      <button class="back-btn" onclick="backToBrowse()">← Back to Browse</button>
+      <div id="answerContent"></div>
+    </div>
+
+    <!-- MATCHES PANEL -->
+    <div class="panel" id="panel-matches">
+      <h2 style="color:var(--text); margin-bottom:4px;">💌 Your Matches</h2>
+      <p style="color:var(--text-mute); font-size:0.9rem;">People who passed your questions — and you passed theirs!</p>
+      <div class="divider"></div>
+      <div id="matchesList"></div>
+    </div>
+
+    <!-- CHAT PANEL -->
+    <div class="panel" id="panel-chat">
+      <div id="chatList"></div>
+    </div>
+
+    <!-- CHAT WINDOW -->
+    <div class="panel" id="panel-chatWindow" style="display:none;">
+      <button class="back-btn" onclick="backToChat()">← Back to Chats</button>
+      <div class="chat-window" style="position:relative; display:flex; flex-direction:column; height:520px;">
+        <div class="chat-header" id="chatHeader"
+          style="display:flex; align-items:center; gap:12px; padding-bottom:12px; border-bottom:1px solid var(--border);">
+        </div>
+        <div class="chat-messages" id="chatMessages"
+          style="flex:1; overflow-y:auto; padding:14px 0; display:flex; flex-direction:column; gap:10px;"></div>
+        <form class="chat-input" id="chatForm"
+          style="display:flex; gap:8px; padding-top:12px; border-top:1px solid var(--border); align-items:center;">
+          <input type="text" id="chatInput" placeholder="Type a message..." autocomplete="off" style="flex:1;" />
+          <button type="submit" class="btn-primary" style="padding:10px 16px;">Send</button>
+        </form>
+      </div>
+    </div>
+
+    <!-- STATS PANEL -->
+    <div class="panel" id="panel-stats">
+      <h2 style="color:var(--text); margin-bottom:4px;">📊 Your Stats</h2>
+      <p style="color:var(--text-mute); font-size:0.9rem;">Track your progress and achievements.</p>
+
+      <div class="stats-panel" style="margin-top:20px;">
+        <div style="display:flex; justify-content:space-between; align-items:center;">
+          <div>
+            <div style="font-size:0.85rem; color:var(--text-mute);">Level</div>
+            <div style="font-size:1.5rem; font-weight:700; color:var(--accent1);" id="levelDisplay">1</div>
+          </div>
+          <div style="text-align:right;">
+            <div style="font-size:0.85rem; color:var(--text-mute);">Points</div>
+            <div style="font-size:1.5rem; font-weight:700; color:var(--accent2);" id="pointsDisplay">0</div>
+          </div>
+        </div>
+        <div class="level-bar">
+          <div class="level-fill" id="levelFill" style="width:0%"></div>
+        </div>
+        <div style="font-size:0.8rem; color:var(--text-mute); margin-top:6px;" id="levelProgress">0 / 100 XP to next
+          level</div>
+      </div>
+
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-value" id="statMatches">0</div>
+          <div class="stat-label">Matches</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value" id="statAttempts">0</div>
+          <div class="stat-label">Attempts</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value" id="statStreak">0</div>
+          <div class="stat-label">Day Streak 🔥</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value" id="statViews">0</div>
+          <div class="stat-label">Profile Views</div>
+        </div>
+      </div>
+
+      <div class="divider"></div>
+
+      <h3 style="color:var(--text); margin-bottom:4px;">🏆 Achievements</h3>
+      <div class="achievements" id="achievements"></div>
+
+      <div class="divider"></div>
+
+      <div class="daily-challenge">
+        <h3>🎯 Daily Challenge</h3>
+        <p id="dailyChallengeText">Answer 3 questions today to earn bonus points!</p>
+        <div class="reward" id="dailyChallengeReward">+50 XP</div>
+      </div>
+    </div>
+
+    <!-- SETTINGS PANEL -->
+    <div class="panel" id="panel-settings">
+      <h2 style="color:var(--text); margin-bottom:4px;">⚙️ Settings</h2>
+      <p style="color:var(--text-mute); font-size:0.9rem;">Manage your data.</p>
+      <div class="divider"></div>
+      <div class="settings-row">
+        <div>
+          <div style="font-weight:600; color:var(--text);">📤 Share your profile</div>
+          <div style="font-size:0.85rem; color:var(--text-mute);">Copy a link with your profile encoded</div>
+        </div>
+        <button class="btn-secondary" onclick="shareProfile()" style="padding:8px 14px; font-size:0.85rem;">Copy
+          Link</button>
+      </div>
+      <div class="settings-row">
+        <div>
+          <div style="font-weight:600; color:var(--text);">📥 Import profile</div>
+          <div style="font-size:0.85rem; color:var(--text-mute);">Paste a shared link to load it</div>
+        </div>
+        <button class="btn-secondary" onclick="importProfile()"
+          style="padding:8px 14px; font-size:0.85rem;">Import</button>
+      </div>
+      <div class="settings-row">
+        <div>
+          <div style="font-weight:600; color:var(--text);">💾 Export data</div>
+          <div style="font-size:0.85rem; color:var(--text-mute);">Download all your data as JSON</div>
+        </div>
+        <button class="btn-secondary" onclick="exportData()"
+          style="padding:8px 14px; font-size:0.85rem;">Export</button>
+      </div>
+      <div class="settings-row">
+        <div>
+          <div style="font-weight:600; color:var(--text);">🗑️ Reset all data</div>
+          <div style="font-size:0.85rem; color:var(--text-mute);">Clears your profile, answers, and chats</div>
+        </div>
+        <button class="btn-danger" onclick="resetAll()">Reset</button>
+      </div>
+      <div class="settings-row">
+        <div>
+          <div style="font-weight:600; color:var(--text);">🎨 Theme</div>
+          <div style="font-size:0.85rem; color:var(--text-mute);">Toggle light/dark mode</div>
+        </div>
+        <button class="btn-secondary" onclick="toggleTheme()"
+          style="padding:8px 14px; font-size:0.85rem;">Toggle</button>
+      </div>
+      <div class="settings-row">
+        <div>
+          <div style="font-weight:600; color:var(--text);">🔔 Sound Effects</div>
+          <div style="font-size:0.85rem; color:var(--text-mute);">Enable sound effects</div>
+        </div>
+        <button class="btn-secondary" onclick="toggleSound()" id="soundBtn"
+          style="padding:8px 14px; font-size:0.85rem;">On</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="modalOverlay">
+    <div class="modal" id="modalContent"></div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <script>
+    // ---------- Data ----------
+    const STORAGE = {
+      my: 'mf_myProfile_v5',
+      others: 'mf_others_v5',
+      answers: 'mf_myAnswers_v5',
+      othersAnswers: 'mf_othersAnswers_v5',
+      chats: 'mf_chats_v5',
+      theme: 'mf_theme',
+      stats: 'mf_stats_v5',
+      sound: 'mf_sound',
+      favorites: 'mf_favorites_v5',
+      drafts: 'mf_drafts_v5'
+    };
+
+    let myProfile = JSON.parse(localStorage.getItem(STORAGE.my) || 'null') || {
+      name: '', bio: '', interests: [], questions: [], threshold: 70, views: 0
+    };
+    let otherProfiles = JSON.parse(localStorage.getItem(STORAGE.others) || 'null');
+    let myAnswers = JSON.parse(localStorage.getItem(STORAGE.answers) || '{}');
+    let othersAnswers = JSON.parse(localStorage.getItem(STORAGE.othersAnswers) || '{}');
+    let chats = JSON.parse(localStorage.getItem(STORAGE.chats) || '{}');
+    let stats = JSON.parse(localStorage.getItem(STORAGE.stats) || 'null') || {
+      points: 0, level: 1, xp: 0, matches: 0, attempts: 0, streak: 0,
+      lastActive: null, achievements: []
+    };
+    let favorites = JSON.parse(localStorage.getItem(STORAGE.favorites) || '[]');
+    let drafts = JSON.parse(localStorage.getItem(STORAGE.drafts) || '{}');
+    let soundEnabled = localStorage.getItem(STORAGE.sound) !== 'false';
+    let currentFilter = 'all';
+    let previewMode = false;
+    let currentTemplateCategory = 'all';
+
+    // Seed demo profiles
+    if (!otherProfiles)
+    {
+      otherProfiles = [
+        {
+          id: 'p1', name: 'Jamie',
+          bio: 'Coffee addict ☕ hiker 🥾 movie nerd 🎬. Looking for someone who can keep up on both trivia nights and trail runs.',
+          interests: [ 'coffee', 'hiking', 'movies', 'trivia' ],
+          threshold: 60, views: 142,
+          questions: [
+            { text: 'Do you love hiking?', type: 'yesno', correct: 'yes', weight: 1, dealbreaker: false, category: 'fun', required: true, hint: 'Be honest — I want a hiking buddy!' },
+            { text: 'Favorite coffee?', type: 'mc', options: [ 'Espresso', 'Latte', 'Black', 'Iced' ], correct: [ 'Iced' ], weight: 2, dealbreaker: false, category: 'fun', required: true },
+            { text: 'Pineapple on pizza?', type: 'yesno', correct: 'no', weight: 1, dealbreaker: true, category: 'dealbreaker', required: true },
+            { text: 'Morning person?', type: 'yesno', correct: 'no', weight: 2, dealbreaker: false, category: 'values', required: true }
+          ]
+        },
+        {
+          id: 'p2', name: 'Riley',
+          bio: 'Bookworm 📚 Board game champion 🎲 Looking for my player two.',
+          interests: [ 'books', 'board games', 'fantasy', 'puzzles' ],
+          threshold: 75, views: 89,
+          questions: [
+            { text: 'Do you read fiction?', type: 'yesno', correct: 'yes', weight: 2, dealbreaker: false, category: 'values', required: true },
+            { text: 'Favorite genre?', type: 'mc', options: [ 'Fantasy', 'Sci-Fi', 'Mystery', 'Romance' ], correct: [ 'Fantasy' ], weight: 2, dealbreaker: false, category: 'fun', required: true },
+            { text: 'What traits do you value most?', type: 'mc-multi', options: [ 'Honesty', 'Humor', 'Kindness', 'Ambition', 'Loyalty' ], correct: [ 'Honesty', 'Kindness' ], weight: 2, dealbreaker: false, category: 'deep', required: true, hint: 'Pick all that apply' },
+            { text: 'Describe your ideal Sunday:', type: 'text', correct: '', weight: 1, dealbreaker: false, category: 'deep', required: true, charLimit: 200 }
+          ]
+        },
+        {
+          id: 'p3', name: 'Sam',
+          bio: 'Chef by day, musician by night 🎸🍳.',
+          interests: [ 'cooking', 'music', 'guitar', 'italian food' ],
+          threshold: 65, views: 201,
+          questions: [
+            { text: 'Can you cook at least 3 dishes?', type: 'yesno', correct: 'yes', weight: 3, dealbreaker: true, category: 'dealbreaker', required: true },
+            { text: 'How important is music to you?', type: 'scale', correct: 4, weight: 2, dealbreaker: false, category: 'values', required: true, hint: '1 = not important, 5 = essential' },
+            { text: 'What song is stuck in your head right now?', type: 'text', correct: '', weight: 1, dealbreaker: false, category: 'fun', required: true, autoPass: true }
+          ]
+        },
+        {
+          id: 'p4', name: 'Morgan',
+          bio: 'Traveler ✈️ Photographer 📷 Been to 27 countries.',
+          interests: [ 'travel', 'photography', 'adventure', 'culture' ],
+          threshold: 70, views: 167,
+          questions: [
+            { text: 'Do you have a passport?', type: 'yesno', correct: 'yes', weight: 2, dealbreaker: true, category: 'dealbreaker', required: true },
+            { text: 'Beach or mountains?', type: 'mc', options: [ 'Beach', 'Mountains', 'Both', 'Neither' ], correct: [ 'Both' ], weight: 1, dealbreaker: false, category: 'fun', required: true },
+            { text: 'Dream destination?', type: 'text', correct: '', weight: 1, dealbreaker: false, category: 'deep', required: true, autoPass: true }
+          ]
+        },
+        {
+          id: 'p5', name: 'Taylor',
+          bio: 'Yoga instructor 🧘 Plant parent 🌱 Quiet nights in > loud nights out.',
+          interests: [ 'yoga', 'plants', 'meditation', 'wellness' ],
+          threshold: 80, views: 73,
+          questions: [
+            { text: 'Do you meditate?', type: 'yesno', correct: 'yes', weight: 2, dealbreaker: false, category: 'values', required: true },
+            { text: 'Introvert or extrovert?', type: 'mc', options: [ 'Introvert', 'Extrovert', 'Ambivert' ], correct: [ 'Introvert' ], weight: 3, dealbreaker: true, category: 'dealbreaker', required: true },
+            { text: 'What does "home" mean to you?', type: 'text', correct: '', weight: 2, dealbreaker: false, category: 'deep', required: true, autoPass: true }
+          ]
+        }
+      ];
+      localStorage.setItem(STORAGE.others, JSON.stringify(otherProfiles));
+    }
+
+    // ---------- Templates by category ----------
+    const TEMPLATES = {
+      fun: [
+        { text: 'Cats or dogs?', type: 'mc', options: [ 'Cats', 'Dogs', 'Both', 'Neither' ], correct: [ 'Dogs' ], category: 'fun', weight: 1 },
+        { text: 'Favorite travel destination?', type: 'mc', options: [ 'Paris', 'Tokyo', 'New York', 'Bali' ], correct: [ 'Paris' ], category: 'fun', weight: 1 },
+        { text: 'Describe your perfect first date:', type: 'text', correct: '', category: 'fun', weight: 1, autoPass: true },
+        { text: 'Favorite movie genre?', type: 'mc', options: [ 'Comedy', 'Drama', 'Action', 'Horror', 'Romance' ], correct: [ 'Comedy' ], category: 'fun', weight: 1 }
+      ],
+      deep: [
+        { text: 'Do you believe in love at first sight?', type: 'yesno', correct: 'yes', category: 'deep', weight: 1 },
+        { text: 'Favorite love language?', type: 'mc', options: [ 'Words', 'Touch', 'Gifts', 'Acts', 'Time' ], correct: [ 'Time' ], category: 'deep', weight: 2 },
+        { text: 'What does "home" mean to you?', type: 'text', correct: '', category: 'deep', weight: 2, autoPass: true },
+        { text: 'What are you most proud of?', type: 'text', correct: '', category: 'deep', weight: 2, autoPass: true }
+      ],
+      values: [
+        { text: 'Are you a morning person?', type: 'yesno', correct: 'yes', category: 'values', weight: 2 },
+        { text: 'Kids in the future?', type: 'yesno', correct: 'yes', category: 'values', weight: 3, dealbreaker: true },
+        { text: 'Would you relocate for love?', type: 'yesno', correct: 'yes', category: 'values', weight: 3 },
+        { text: 'How important is religion?', type: 'scale', correct: 3, category: 'values', weight: 2, hint: '1 = not important, 5 = very important' }
+      ],
+      dealbreaker: [
+        { text: 'Do you smoke?', type: 'yesno', correct: 'no', category: 'dealbreaker', weight: 3, dealbreaker: true },
+        { text: 'Do you want kids?', type: 'yesno', correct: 'yes', category: 'dealbreaker', weight: 3, dealbreaker: true },
+        { text: 'Are you currently in a relationship?', type: 'yesno', correct: 'no', category: 'dealbreaker', weight: 3, dealbreaker: true }
+      ]
+    };
+
+    // ---------- Achievements ----------
+    const ACHIEVEMENTS = [
+      { id: 'first_match', name: 'First Match', desc: 'Get your first match', icon: '💖', condition: s => s.matches >= 1 },
+      { id: 'five_matches', name: 'Social Butterfly', desc: 'Get 5 matches', icon: '🦋', condition: s => s.matches >= 5 },
+      { id: 'ten_matches', name: 'Love Expert', desc: 'Get 10 matches', icon: '💕', condition: s => s.matches >= 10 },
+      { id: 'first_attempt', name: 'Daredevil', desc: 'Answer your first question', icon: '🎯', condition: s => s.attempts >= 1 },
+      { id: 'ten_attempts', name: 'Question Master', desc: 'Answer 10 questions', icon: '🧠', condition: s => s.attempts >= 10 },
+      { id: 'streak_3', name: 'On Fire', desc: '3-day streak', icon: '🔥', condition: s => s.streak >= 3 },
+      { id: 'streak_7', name: 'Unstoppable', desc: '7-day streak', icon: '⚡', condition: s => s.streak >= 7 },
+      { id: 'level_5', name: 'Rising Star', desc: 'Reach level 5', icon: '⭐', condition: s => s.level >= 5 },
+      { id: 'level_10', name: 'Legend', desc: 'Reach level 10', icon: '👑', condition: s => s.level >= 10 },
+      { id: 'points_500', name: 'Point Collector', desc: 'Earn 500 points', icon: '💎', condition: s => s.points >= 500 }
+    ];
+
+    // ---------- Theme ----------
+    function applyTheme(theme) {
+      document.documentElement.setAttribute('data-theme', theme);
+      document.getElementById('themeBtn').textContent = theme === 'dark' ? '☀️' : '🌙';
+      localStorage.setItem(STORAGE.theme, theme);
+    }
+    function toggleTheme() {
+      const current = document.documentElement.getAttribute('data-theme') || 'light';
+      applyTheme(current === 'dark' ? 'light' : 'dark');
+    }
+    applyTheme(localStorage.getItem(STORAGE.theme) || 'light');
+
+    // ---------- Sound ----------
+    function toggleSound() {
+      soundEnabled = !soundEnabled;
+      localStorage.setItem(STORAGE.sound, soundEnabled);
+      document.getElementById('soundBtn').textContent = soundEnabled ? 'On' : 'Off';
+    }
+    document.getElementById('soundBtn').textContent = soundEnabled ? 'On' : 'Off';
+
+    function playSound(type) {
+      if (!soundEnabled) return;
+      const sounds = {
+        match: [ 523.25, 659.25, 783.99 ],
+        fail: [ 392, 349.23 ],
+        message: [ 440, 554.37 ],
+        achievement: [ 523.25, 659.25, 783.99, 1046.5 ]
+      };
+      const notes = sounds[ type ] || sounds.message;
+      notes.forEach((freq, i) => {
+        setTimeout(() => {
+          try
+          {
+            const ctx = new (window.AudioContext || window.webkitAudioContext)();
+            const osc = ctx.createOscillator();
+            const gain = ctx.createGain();
+            osc.connect(gain);
+            gain.connect(ctx.destination);
+            osc.frequency.value = freq;
+            osc.type = 'sine';
+            gain.gain.setValueAtTime(0.3, ctx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.3);
+            osc.start(ctx.currentTime);
+            osc.stop(ctx.currentTime + 0.3);
+          } catch (e) { }
+        }, i * 100);
+      });
+    }
+
+    // ---------- Avatar ----------
+    function avatarColors(name) {
+      const palettes = [
+        [ '#ff6b9d', '#c06eff' ], [ '#f093fb', '#f5576c' ], [ '#4facfe', '#00f2fe' ],
+        [ '#43e97b', '#38f9d7' ], [ '#fa709a', '#fee140' ], [ '#30cfd0', '#330867' ],
+        [ '#a8edea', '#fed6e3' ], [ '#ff9a9e', '#fecfef' ], [ '#667eea', '#764ba2' ],
+        [ '#f6d365', '#fda085' ]
+      ];
+      let hash = 0;
+      for (let i = 0; i < name.length; i++) hash = (hash * 31 + name.charCodeAt(i)) >>> 0;
+      return palettes[ hash % palettes.length ];
+    }
+    function renderAvatar(name, size = '') {
+      const initials = name.split(' ').map(s => s[ 0 ]).slice(0, 2).join('').toUpperCase();
+      const [ c1, c2 ] = avatarColors(name);
+      return `<div class="avatar ${size}" style="background: linear-gradient(135deg, ${c1}, ${c2});">${initials || '?'}</div>`;
+    }
+    function updateMyAvatar() {
+      const name = document.getElementById('myName').value.trim() || '?';
+      const [ c1, c2 ] = avatarColors(name);
+      const el = document.getElementById('myAvatar');
+      el.style.background = `linear-gradient(135deg, ${c1}, ${c2})`;
+      el.textContent = name.split(' ').map(s => s[ 0 ]).slice(0, 2).join('').toUpperCase() || '?';
+    }
+    document.getElementById('myName').addEventListener('input', updateMyAvatar);
+
+    // ---------- Tabs ----------
+    document.querySelectorAll('.tab').forEach(t => {
+      t.addEventListener('click', () => switchTab(t.dataset.tab));
+    });
+    function switchTab(tab) {
+      document.querySelectorAll('.tab').forEach(x => x.classList.toggle('active', x.dataset.tab === tab));
+      document.querySelectorAll('.panel').forEach(p => { p.classList.remove('active'); p.style.display = 'none'; });
+      const panel = document.getElementById('panel-' + tab);
+      if (panel) { panel.style.display = 'block'; panel.classList.add('active'); }
+      if (tab === 'browse') renderBrowse();
+      if (tab === 'favorites') renderFavorites();
+      if (tab === 'matches') renderMatches();
+      if (tab === 'chat') renderChatList();
+      if (tab === 'stats') renderStats();
+      updateBadges();
+    }
+    function updateBadges() {
+      const matchCount = Object.values(myAnswers).filter(a => a.passed).length;
+      const chatCount = Object.keys(chats).length;
+      const favCount = favorites.length;
+      const mc = document.getElementById('matchCount');
+      const cc = document.getElementById('chatCount');
+      const fc = document.getElementById('favCount');
+      if (matchCount > 0) { mc.textContent = matchCount; mc.style.display = 'inline-block'; }
+      else mc.style.display = 'none';
+      if (chatCount > 0) { cc.textContent = chatCount; cc.style.display = 'inline-block'; }
+      else cc.style.display = 'none';
+      if (favCount > 0) { fc.textContent = favCount; fc.style.display = 'inline-block'; }
+      else fc.style.display = 'none';
+    }
+
+    // ---------- Filters ----------
+    document.getElementById('filterBar').addEventListener('click', e => {
+      if (e.target.classList.contains('filter-chip'))
+      {
+        document.querySelectorAll('.filter-chip').forEach(c => c.classList.remove('active'));
+        e.target.classList.add('active');
+        currentFilter = e.target.dataset.filter;
+        renderBrowse();
+      }
+    });
+
+    // ---------- Templates ----------
+    function renderTemplateTabs() {
+      const cats = [
+        { key: 'all', label: '✨ All' },
+        { key: 'fun', label: '🎉 Fun' },
+        { key: 'deep', label: '🌙 Deep' },
+        { key: 'values', label: '💎 Values' },
+        { key: 'dealbreaker', label: '💥 Dealbreaker' }
+      ];
+      document.getElementById('templateTabs').innerHTML = cats.map(c =>
+        `<div class="template-tab ${currentTemplateCategory === c.key ? 'active' : ''}" onclick="setTemplateCategory('${c.key}')">${c.label}</div>`
+      ).join('');
+    }
+    function setTemplateCategory(cat) {
+      currentTemplateCategory = cat;
+      renderTemplateTabs();
+      renderTemplates();
+    }
+    function renderTemplates() {
+      const el = document.getElementById('templates');
+      let items = [];
+      if (currentTemplateCategory === 'all')
+      {
+        Object.values(TEMPLATES).forEach(arr => items.push(...arr));
+      } else
+      {
+        items = TEMPLATES[ currentTemplateCategory ] || [];
+      }
+      el.innerHTML = items.map((t, i) =>
+        `<button class="template-btn" onclick="useTemplate('${currentTemplateCategory}', ${i})">${escapeHtml(t.text.slice(0, 30))}${t.text.length > 30 ? '...' : ''}</button>`
+      ).join('');
+    }
+    function useTemplate(cat, i) {
+      const t = (cat === 'all' ? Object.values(TEMPLATES).flat() : TEMPLATES[ cat ])[ i ];
+      document.getElementById('newQText').value = t.text;
+      document.getElementById('newQType').value = t.type;
+      document.getElementById('newQCat').value = t.category;
+      document.getElementById('newQWeight').value = t.weight;
+      document.getElementById('newQDealbreaker').checked = !!t.dealbreaker;
+      document.getElementById('newQAutoPass').checked = !!t.autoPass;
+      document.getElementById('newQHint').value = t.hint || '';
+      if (t.type === 'mc' || t.type === 'mc-multi')
+      {
+        document.getElementById('newQOptions').value = t.options.join(', ');
+        document.getElementById('newQCorrect').value = Array.isArray(t.correct) ? t.correct.join(', ') : t.correct;
+      } else if (t.type === 'yesno')
+      {
+        document.getElementById('newQYesNo').value = t.correct;
+      } else if (t.type === 'scale')
+      {
+        document.getElementById('newQScale').value = t.correct;
+      }
+      document.getElementById('newQType').dispatchEvent(new Event('change'));
+      toast('Template loaded ✨');
+    }
+
+    // ---------- Create ----------
+    function loadMyProfile() {
+      document.getElementById('myName').value = myProfile.name || '';
+      document.getElementById('myBio').value = myProfile.bio || '';
+      document.getElementById('myInterests').value = (myProfile.interests || []).join(', ');
+      document.getElementById('threshold').value = myProfile.threshold ?? 70;
+      updateMyAvatar();
+      renderQuestions();
+      renderTemplateTabs();
+      renderTemplates();
+    }
+
+    function renderQuestions() {
+      const list = document.getElementById('questionList');
+      if (!myProfile.questions.length)
+      {
+        list.innerHTML = '<div class="empty-state" style="padding:20px;"><div class="emoji">📝</div><div>No questions yet. Add your first below or pick a template!</div></div>';
+        updateConditionDropdown();
+        return;
+      }
+      list.innerHTML = myProfile.questions.map((q, i) => `
+      <div class="question-card ${q.dealbreaker ? 'dealbreaker' : ''}" draggable="true" data-idx="${i}"
+           ondragstart="dragStart(event, ${i})" ondragover="dragOver(event, ${i})" ondrop="drop(event, ${i})" ondragend="dragEnd(event)">
+        <div class="q-head">
+          <span class="drag-handle" title="Drag to reorder">⋮⋮</span>
+          <div class="q-text" ondblclick="inlineEdit(${i}, this)">${escapeHtml(q.text)}</div>
+          <button class="btn-danger" onclick="removeQuestion(${i})" style="padding:4px 8px; font-size:0.8rem;">✕</button>
+        </div>
+        ${q.hint ? `<div class="q-hint">💡 ${escapeHtml(q.hint)}</div>` : ''}
+        <div class="q-meta">
+          <span class="pill category">${catLabel(q.category)}</span>
+          <span class="pill weight-${q.weight}">${q.weight}x</span>
+          ${q.dealbreaker ? '<span class="pill dealbreaker">💥 Dealbreaker</span>' : ''}
+          ${!q.required ? '<span class="pill optional">Optional</span>' : ''}
+          ${q.autoPass ? '<span class="pill optional">Auto-pass</span>' : ''}
+          <span class="pill">${typeLabel(q.type)}</span>
+          ${q.condition ? `<span class="pill" style="background:#e0f0ff; color:#0066cc;">🔗 Conditional</span>` : ''}
+          ${q.charLimit ? `<span class="pill">${q.charLimit} chars</span>` : ''}
+        </div>
+        <div class="q-actions">
+          <button onclick="editQuestion(${i})">✏️ Edit</button>
+          <button onclick="copyQuestion(${i})">📋 Copy</button>
+          <button onclick="toggleRequired(${i})">${q.required ? '🔓 Make Optional' : '🔒 Make Required'}</button>
+        </div>
+      </div>
+    `).join('');
+      updateConditionDropdown();
+    }
+
+    function catLabel(c) {
+      return ({ fun: '🎉 Fun', deep: '🌙 Deep', values: '💎 Values', dealbreaker: '💥 Dealbreaker' })[ c ] || c;
+    }
+    function typeLabel(t) {
+      return ({ yesno: 'Yes/No', mc: 'MC', 'mc-multi': 'MC (multi)', text: 'Text', scale: 'Scale' })[ t ] || t;
+    }
+
+    document.getElementById('newQType').addEventListener('change', e => {
+      const v = e.target.value;
+      document.getElementById('mcOptionsWrap').style.display = (v === 'mc' || v === 'mc-multi') ? 'block' : 'none';
+      document.getElementById('yesnoWrap').style.display = v === 'yesno' ? 'block' : 'none';
+      document.getElementById('scaleWrap').style.display = v === 'scale' ? 'block' : 'none';
+      document.getElementById('textWrap').style.display = v === 'text' ? 'block' : 'none';
+    });
+
+    function updateConditionDropdown() {
+      const sel = document.getElementById('newQCondition');
+      const current = sel.value;
+      sel.innerHTML = '<option value="">No condition — always show</option>';
+      myProfile.questions.forEach((q, i) => {
+        if (q.type === 'yesno')
+        {
+          sel.innerHTML += `<option value="q${i}:yes">If Q${i + 1} = Yes</option>`;
+          sel.innerHTML += `<option value="q${i}:no">If Q${i + 1} = No</option>`;
+        } else if (q.type === 'mc' || q.type === 'mc-multi')
+        {
+          (q.options || []).forEach(opt => {
+            sel.innerHTML += `<option value="q${i}:${opt}">If Q${i + 1} = ${escapeHtml(opt)}</option>`;
+          });
+        }
+      });
+      sel.value = current;
+    }
+
+    function addQuestion() {
+      const text = document.getElementById('newQText').value.trim();
+      const type = document.getElementById('newQType').value;
+      const category = document.getElementById('newQCat').value;
+      const weight = parseInt(document.getElementById('newQWeight').value);
+      const dealbreaker = document.getElementById('newQDealbreaker').checked;
+      const required = document.getElementById('newQRequired').checked;
+      const autoPass = document.getElementById('newQAutoPass').checked;
+      const hint = document.getElementById('newQHint').value.trim();
+      const condition = document.getElementById('newQCondition').value;
+      if (!text) { toast('Please enter a question'); return; }
+      let q = { text, type, category, weight, dealbreaker, required, autoPass, hint, condition };
+      if (type === 'yesno')
+      {
+        q.correct = document.getElementById('newQYesNo').value;
+      } else if (type === 'mc' || type === 'mc-multi')
+      {
+        const opts = document.getElementById('newQOptions').value.split(',').map(s => s.trim()).filter(Boolean);
+        const correctStr = document.getElementById('newQCorrect').value.trim();
+        const correct = correctStr.split(',').map(s => s.trim()).filter(Boolean);
+        if (opts.length < 2) { toast('Add at least 2 options'); return; }
+        if (!correct.length) { toast('Set the correct answer'); return; }
+        const invalid = correct.filter(c => !opts.includes(c));
+        if (invalid.length) { toast(`Invalid correct answer: ${invalid.join(', ')}`); return; }
+        q.options = opts;
+        q.correct = correct;
+      } else if (type === 'scale')
+      {
+        q.correct = parseInt(document.getElementById('newQScale').value);
+      } else
+      {
+        q.correct = '';
+        const charLimit = parseInt(document.getElementById('newQCharLimit').value);
+        if (charLimit > 0) q.charLimit = charLimit;
+        const keywords = document.getElementById('newQKeywords').value.split(',').map(s => s.trim()).filter(Boolean);
+        if (keywords.length) q.keywords = keywords;
+      }
+      myProfile.questions.push(q);
+      clearQuestionForm();
+      renderQuestions();
+      toast('Question added ✨');
+    }
+
+    function clearQuestionForm() {
+      document.getElementById('newQText').value = '';
+      document.getElementById('newQHint').value = '';
+      document.getElementById('newQOptions').value = '';
+      document.getElementById('newQCorrect').value = '';
+      document.getElementById('newQKeywords').value = '';
+      document.getElementById('newQCharLimit').value = '0';
+      document.getElementById('newQScale').value = '3';
+      document.getElementById('newQDealbreaker').checked = false;
+      document.getElementById('newQAutoPass').checked = false;
+      document.getElementById('newQRequired').checked = true;
+      document.getElementById('newQCondition').value = '';
+    }
+
+    function removeQuestion(i) {
+      myProfile.questions.splice(i, 1);
+      renderQuestions();
+    }
+
+    function copyQuestion(i) {
+      const q = JSON.parse(JSON.stringify(myProfile.questions[ i ]));
+      q.text = q.text + ' (copy)';
+      myProfile.questions.splice(i + 1, 0, q);
+      renderQuestions();
+      toast('Question copied 📋');
+    }
+
+    function toggleRequired(i) {
+      myProfile.questions[ i ].required = !myProfile.questions[ i ].required;
+      renderQuestions();
+    }
+
+    function editQuestion(i) {
+      const q = myProfile.questions[ i ];
+      const modal = document.getElementById('modalContent');
+      modal.innerHTML = `
+      <button class="modal-close" onclick="closeModal()">×</button>
+      <h3>✏️ Edit Question</h3>
+      <label>Question Text</label>
+      <input type="text" id="editQText" value="${escapeAttr(q.text)}" />
+      <label>Hint</label>
+      <input type="text" id="editQHint" value="${escapeAttr(q.hint || '')}" />
+      <div class="row" style="margin-top:10px;">
+        <div>
+          <label style="margin-top:0;">Type</label>
+          <select id="editQType">
+            <option value="yesno" ${q.type === 'yesno' ? 'selected' : ''}>Yes / No</option>
+            <option value="mc" ${q.type === 'mc' ? 'selected' : ''}>Multiple Choice</option>
+            <option value="mc-multi" ${q.type === 'mc-multi' ? 'selected' : ''}>MC (multi)</option>
+            <option value="text" ${q.type === 'text' ? 'selected' : ''}>Free Text</option>
+            <option value="scale" ${q.type === 'scale' ? 'selected' : ''}>Scale (1-5)</option>
+          </select>
+        </div>
+        <div>
+          <label style="margin-top:0;">Category</label>
+          <select id="editQCat">
+            <option value="fun" ${q.category === 'fun' ? 'selected' : ''}>🎉 Fun</option>
+            <option value="deep" ${q.category === 'deep' ? 'selected' : ''}>🌙 Deep</option>
+            <option value="values" ${q.category === 'values' ? 'selected' : ''}>💎 Values</option>
+            <option value="dealbreaker" ${q.category === 'dealbreaker' ? 'selected' : ''}>💥 Dealbreaker</option>
+          </select>
+        </div>
+        <div>
+          <label style="margin-top:0;">Weight</label>
+          <select id="editQWeight">
+            <option value="1" ${q.weight == 1 ? 'selected' : ''}>1x</option>
+            <option value="2" ${q.weight == 2 ? 'selected' : ''}>2x</option>
+            <option value="3" ${q.weight == 3 ? 'selected' : ''}>3x</option>
+          </select>
+        </div>
+      </div>
+      <div id="editMcWrap" style="display:${(q.type === 'mc' || q.type === 'mc-multi') ? 'block' : 'none'}; margin-top:10px;">
+        <label>Options (comma separated)</label>
+        <input type="text" id="editQOptions" value="${escapeAttr((q.options || []).join(', '))}" />
+        <label>Correct Answer(s)</label>
+        <input type="text" id="editQCorrect" value="${escapeAttr(Array.isArray(q.correct) ? q.correct.join(', ') : (q.correct || ''))}" />
+      </div>
+      <div id="editYesnoWrap" style="display:${q.type === 'yesno' ? 'block' : 'none'}; margin-top:10px;">
+        <label>Correct Answer</label>
+        <select id="editQYesNo">
+          <option value="yes" ${q.correct === 'yes' ? 'selected' : ''}>Yes</option>
+          <option value="no" ${q.correct === 'no' ? 'selected' : ''}>No</option>
+        </select>
+      </div>
+      <div id="editScaleWrap" style="display:${q.type === 'scale' ? 'block' : 'none'}; margin-top:10px;">
+        <label>Correct Value (1-5)</label>
+        <input type="number" id="editQScale" min="1" max="5" value="${q.correct || 3}" />
+      </div>
+      <div style="display:flex; gap:12px; margin-top:12px; flex-wrap:wrap;">
+        <label style="display:flex; align-items:center; gap:8px; cursor:pointer; margin:0;">
+          <input type="checkbox" id="editQDealbreaker" style="width:auto;" ${q.dealbreaker ? 'checked' : ''} />
+          <span>💥 Dealbreaker</span>
+        </label>
+        <label style="display:flex; align-items:center; gap:8px; cursor:pointer; margin:0;">
+          <input type="checkbox" id="editQRequired" style="width:auto;" ${q.required !== false ? 'checked' : ''} />
+          <span>Required</span>
+        </label>
+        <label style="display:flex; align-items:center; gap:8px; cursor:pointer; margin:0;">
+          <input type="checkbox" id="editQAutoPass" style="width:auto;" ${q.autoPass ? 'checked' : ''} />
+          <span>Auto-pass</span>
+        </label>
+      </div>
+      <button class="btn-primary" style="width:100%; margin-top:14px;" onclick="saveEditQuestion(${i})">💾 Save Changes</button>
+    `;
+      document.getElementById('editQType').addEventListener('change', e => {
+        const v = e.target.value;
+        document.getElementById('editMcWrap').style.display = (v === 'mc' || v === 'mc-multi') ? 'block' : 'none';
+        document.getElementById('editYesnoWrap').style.display = v === 'yesno' ? 'block' : 'none';
+        document.getElementById('editScaleWrap').style.display = v === 'scale' ? 'block' : 'none';
+      });
+      document.getElementById('modalOverlay').classList.add('show');
+    }
+
+    function saveEditQuestion(i) {
+      const q = myProfile.questions[ i ];
+      q.text = document.getElementById('editQText').value.trim();
+      q.hint = document.getElementById('editQHint').value.trim();
+      q.type = document.getElementById('editQType').value;
+      q.category = document.getElementById('editQCat').value;
+      q.weight = parseInt(document.getElementById('editQWeight').value);
+      q.dealbreaker = document.getElementById('editQDealbreaker').checked;
+      q.required = document.getElementById('editQRequired').checked;
+      q.autoPass = document.getElementById('editQAutoPass').checked;
+      if (q.type === 'yesno')
+      {
+        q.correct = document.getElementById('editQYesNo').value;
+      } else if (q.type === 'mc' || q.type === 'mc-multi')
+      {
+        const opts = document.getElementById('editQOptions').value.split(',').map(s => s.trim()).filter(Boolean);
+        const correct = document.getElementById('editQCorrect').value.split(',').map(s => s.trim()).filter(Boolean);
+        q.options = opts;
+        q.correct = correct;
+      } else if (q.type === 'scale')
+      {
+        q.correct = parseInt(document.getElementById('editQScale').value);
+      }
+      closeModal();
+      renderQuestions();
+      toast('Question updated ✨');
+    }
+
+    function inlineEdit(i, el) {
+      const q = myProfile.questions[ i ];
+      const input = document.createElement('input');
+      input.type = 'text';
+      input.className = 'inline-edit-input';
+      input.value = q.text;
+      el.replaceWith(input);
+      input.focus();
+      input.select();
+      const save = () => {
+        q.text = input.value.trim() || q.text;
+        renderQuestions();
+      };
+      input.addEventListener('blur', save);
+      input.addEventListener('keydown', e => {
+        if (e.key === 'Enter') save();
+        if (e.key === 'Escape') renderQuestions();
+      });
+    }
+
+    // ---------- Drag & Drop ----------
+    let dragIdx = null;
+    function dragStart(e, i) {
+      dragIdx = i;
+      e.currentTarget.classList.add('dragging');
+      e.dataTransfer.effectAllowed = 'move';
+    }
+    function dragOver(e, i) {
+      e.preventDefault();
+      document.querySelectorAll('.question-card').forEach(c => c.classList.remove('drag-over'));
+      if (i !== dragIdx) e.currentTarget.classList.add('drag-over');
+    }
+    function drop(e, i) {
+      e.preventDefault();
+      document.querySelectorAll('.question-card').forEach(c => c.classList.remove('drag-over'));
+      if (dragIdx === null || dragIdx === i) return;
+      const item = myProfile.questions.splice(dragIdx, 1)[ 0 ];
+      myProfile.questions.splice(i, 0, item);
+      dragIdx = null;
+      renderQuestions();
+      toast('Reordered 🔀');
+    }
+    function dragEnd(e) {
+      document.querySelectorAll('.question-card').forEach(c => c.classList.remove('dragging', 'drag-over'));
+      dragIdx = null;
+    }
+
+    // ---------- Bulk Import ----------
+    function showBulkImport() {
+      const area = document.getElementById('bulkImportArea');
+      if (area.style.display === 'block')
+      {
+        area.style.display = 'none';
+        return;
+      }
+      area.style.display = 'block';
+      area.innerHTML = `
+      <div class="bulk-import">
+        <h4 style="color:var(--accent1); margin-bottom:8px;">📥 Bulk Import Questions</h4>
+        <p style="color:var(--text-mute); font-size:0.85rem; margin-bottom:10px;">Paste one question per line. Format: <code>Question text | type | correct</code></p>
+        <p style="color:var(--text-mute); font-size:0.8rem; margin-bottom:10px;">Types: yesno, mc, text, scale. For MC, use "mc:opt1,opt2,opt3" and correct is comma-separated.</p>
+        <textarea id="bulkText" placeholder="Do you like coffee? | yesno | yes&#10;Favorite color? | mc:red,blue,green | blue&#10;Describe your dream vacation | text |"></textarea>
+        <div style="display:flex; gap:8px; margin-top:10px;">
+          <button class="btn-primary" onclick="importBulk()">Import</button>
+          <button class="btn-secondary" onclick="document.getElementById('bulkImportArea').style.display='none'">Cancel</button>
+        </div>
+      </div>
+    `;
+    }
+    function importBulk() {
+      const text = document.getElementById('bulkText').value.trim();
+      if (!text) { toast('Paste some questions first'); return; }
+      const lines = text.split('\n').filter(l => l.trim());
+      let added = 0;
+      lines.forEach(line => {
+        const parts = line.split('|').map(s => s.trim());
+        if (parts.length < 1 || !parts[ 0 ]) return;
+        const qText = parts[ 0 ];
+        let type = 'text', correct = '', options = [];
+        if (parts[ 1 ])
+        {
+          const typePart = parts[ 1 ];
+          if (typePart === 'yesno' || typePart === 'text' || typePart === 'scale')
+          {
+            type = typePart;
+          } else if (typePart.startsWith('mc:'))
+          {
+            type = 'mc';
+            options = typePart.slice(3).split(',').map(s => s.trim()).filter(Boolean);
+          } else if (typePart === 'mc')
+          {
+            type = 'mc';
+          }
+        }
+        if (parts[ 2 ])
+        {
+          if (type === 'mc')
+          {
+            correct = parts[ 2 ].split(',').map(s => s.trim()).filter(Boolean);
+            if (!options.length) options = [ 'Option 1', 'Option 2', 'Option 3' ];
+          } else
+          {
+            correct = parts[ 2 ];
+          }
+        }
+        const q = {
+          text: qText, type, category: 'fun', weight: 1,
+          dealbreaker: false, required: true, autoPass: type === 'text',
+          hint: '', condition: ''
+        };
+        if (type === 'mc') { q.options = options; q.correct = correct.length ? correct : [ options[ 0 ] ]; }
+        else if (type === 'yesno') { q.correct = correct || 'yes'; }
+        else if (type === 'scale') { q.correct = parseInt(correct) || 3; }
+        else { q.correct = ''; }
+        myProfile.questions.push(q);
+        added++;
+      });
+      renderQuestions();
+      document.getElementById('bulkImportArea').style.display = 'none';
+      toast(`Imported ${added} question${added !== 1 ? 's' : ''} ✨`);
+    }
+
+    // ---------- Preview Mode ----------
+    function togglePreview() {
+      if (!myProfile.questions.length) { toast('Add some questions first'); return; }
+      previewMode = !previewMode;
+      const banner = document.getElementById('previewBanner');
+      if (previewMode)
+      {
+        banner.style.display = 'block';
+        banner.innerHTML = `
+        <div class="preview-banner">
+          <div>👁️ <strong>Preview Mode</strong> — See what respondents will see</div>
+          <button class="btn-secondary" style="padding:6px 12px; font-size:0.82rem; background:white;" onclick="togglePreview()">Exit Preview</button>
+        </div>
+      `;
+        renderQuestionsPreview();
+      } else
+      {
+        banner.style.display = 'none';
+        renderQuestions();
+      }
+    }
+    function renderQuestionsPreview() {
+      const list = document.getElementById('questionList');
+      list.innerHTML = `
+      <div style="background:var(--card-soft); border-radius:14px; padding:16px; margin-bottom:12px;">
+        <div style="display:flex; gap:12px; align-items:center;">
+          ${renderAvatar(myProfile.name || 'You', 'lg')}
+          <div>
+            <h3 style="color:var(--accent1);">${escapeHtml(myProfile.name || 'Your Name')}'s Questions</h3>
+            <p style="color:var(--text-mute); font-size:0.9rem;">Score ${myProfile.threshold}%+ to earn a date 💖</p>
+          </div>
+        </div>
+        <div style="color:var(--text-soft); margin-top:10px;">${escapeHtml(myProfile.bio || '')}</div>
+      </div>
+      ${myProfile.questions.map((q, i) => renderPreviewQuestion(q, i)).join('')}
+    `;
+    }
+    function renderPreviewQuestion(q, i) {
+      let input = '';
+      if (q.type === 'yesno')
+      {
+        input = `
+        <div class="yesno-toggle">
+          <div class="yesno-btn">👍 Yes</div>
+          <div class="yesno-btn">👎 No</div>
+        </div>
+      `;
+      } else if (q.type === 'mc')
+      {
+        input = `<div class="mc-options">${(q.options || []).map(o => `
+        <div class="mc-option"><div class="radio"></div><span>${escapeHtml(o)}</span></div>
+      `).join('')}</div>`;
+      } else if (q.type === 'mc-multi')
+      {
+        input = `<div class="mc-options">${(q.options || []).map(o => `
+        <div class="mc-option"><div class="checkbox"></div><span>${escapeHtml(o)}</span></div>
+      `).join('')}</div>`;
+      } else if (q.type === 'scale')
+      {
+        input = `
+        <div style="display:flex; gap:8px; margin-top:8px;">
+          ${[ 1, 2, 3, 4, 5 ].map(n => `<div style="flex:1; padding:12px; border:2px solid var(--border); border-radius:10px; text-align:center; cursor:pointer;">${n}</div>`).join('')}
+        </div>
+      `;
+      } else
+      {
+        input = `<textarea placeholder="Your answer..." style="margin-top:8px;"${q.charLimit ? ` maxlength="${q.charLimit}"` : ''}></textarea>
+        ${q.charLimit ? `<div class="char-counter">0 / ${q.charLimit}</div>` : ''}`;
+      }
+      return `
+      <div class="question-card ${q.dealbreaker ? 'dealbreaker' : ''}">
+        <div class="q-head">
+          <div class="q-text">Q${i + 1}. ${escapeHtml(q.text)} ${q.required !== false ? '<span style="color:var(--danger);">*</span>' : '<span style="color:var(--text-mute); font-size:0.8rem;">(optional)</span>'}</div>
+        </div>
+        ${q.hint ? `<div class="q-hint">💡 ${escapeHtml(q.hint)}</div>` : ''}
+        <div class="q-meta" style="margin-bottom:8px;">
+          <span class="pill category">${catLabel(q.category)}</span>
+          <span class="pill weight-${q.weight}">${q.weight}x</span>
+          ${q.dealbreaker ? '<span class="pill dealbreaker">💥 Dealbreaker</span>' : ''}
+        </div>
+        ${input}
+      </div>
+    `;
+    }
+
+    function saveProfile() {
+      myProfile.name = document.getElementById('myName').value.trim();
+      myProfile.bio = document.getElementById('myBio').value.trim();
+      myProfile.interests = document.getElementById('myInterests').value.split(',').map(s => s.trim()).filter(Boolean);
+      myProfile.threshold = parseInt(document.getElementById('threshold').value) || 0;
+      if (!myProfile.name) { toast('Please enter your name'); return; }
+      if (!myProfile.questions.length) { toast('Add at least one question'); return; }
+      localStorage.setItem(STORAGE.my, JSON.stringify(myProfile));
+      toast('Profile saved 💖');
+      checkAchievements();
+    }
+
+    // ---------- Browse ----------
+    function renderBrowse() {
+      const list = document.getElementById('browseList');
+      const q = (document.getElementById('searchInput').value || '').toLowerCase();
+      let filtered = otherProfiles.filter(p =>
+        !q || p.name.toLowerCase().includes(q) || p.bio.toLowerCase().includes(q) ||
+        (p.interests || []).some(i => i.toLowerCase().includes(q))
+      );
+      if (currentFilter === 'unanswered') filtered = filtered.filter(p => !myAnswers[ p.id ]);
+      else if (currentFilter === 'favorites') filtered = filtered.filter(p => favorites.includes(p.id));
+      else if (currentFilter === 'premium') filtered = filtered.filter(p => p.premium);
+      else if (currentFilter === 'verified') filtered = filtered.filter(p => p.verified);
+
+      if (!filtered.length)
+      {
+        list.innerHTML = '<div class="empty-state"><div class="emoji">🌸</div><div>No profiles match your search.</div></div>';
+        return;
+      }
+      list.innerHTML = '<div class="profile-grid">' + filtered.map(p => {
+        const answered = myAnswers[ p.id ];
+        const badge = answered
+          ? (answered.passed
+            ? `<span class="badge match">💖 Matched · ${answered.score}%</span>`
+            : `<span class="badge fail">Tried · ${answered.score}%</span>`)
+          : '';
+        const isFav = favorites.includes(p.id);
+        const estTime = estimateTime(p.questions);
+        return `
+        <div class="profile-card" onclick="openProfile('${p.id}')">
+          <button class="btn-icon" style="position:absolute; top:12px; right:12px; font-size:1.3rem;" onclick="event.stopPropagation(); toggleFavorite('${p.id}')">${isFav ? '⭐' : '☆'}</button>
+          <div class="p-head">
+            ${renderAvatar(p.name)}
+            <div style="flex:1;">
+              <h3>${escapeHtml(p.name)} ${badge}</h3>
+              <div class="views">👁️ ${p.views} views · ⏱️ ~${estTime} min</div>
+            </div>
+          </div>
+          <div class="bio">${escapeHtml(p.bio)}</div>
+          ${(p.interests || []).length ? `<div class="tags">${p.interests.map(i => `<span class="tag interest">${escapeHtml(i)}</span>`).join('')}</div>` : ''}
+          <div class="stats">
+            <span>📝 ${p.questions.length} Qs</span>
+            <span>🎯 ${p.threshold}%</span>
+            <span>💥 ${p.questions.filter(x => x.dealbreaker).length}</span>
+          </div>
+        </div>
+      `;
+      }).join('') + '</div>';
+    }
+
+    function estimateTime(questions) {
+      let mins = 0;
+      questions.forEach(q => {
+        if (q.type === 'yesno') mins += 0.15;
+        else if (q.type === 'mc' || q.type === 'mc-multi' || q.type === 'scale') mins += 0.25;
+        else mins += 0.5;
+      });
+      return Math.max(1, Math.round(mins));
+    }
+
+    function toggleFavorite(id) {
+      const idx = favorites.indexOf(id);
+      if (idx >= 0) { favorites.splice(idx, 1); toast('Removed from favorites'); }
+      else { favorites.push(id); toast('Added to favorites ⭐'); stats.points += 5; }
+      localStorage.setItem(STORAGE.favorites, JSON.stringify(favorites));
+      localStorage.setItem(STORAGE.stats, JSON.stringify(stats));
+      renderBrowse();
+      renderFavorites();
+      updateBadges();
+      checkAchievements();
+    }
+
+    function renderFavorites() {
+      const list = document.getElementById('favoritesList');
+      if (!favorites.length)
+      {
+        list.innerHTML = '<div class="empty-state"><div class="emoji">⭐</div><div>No favorites yet. Tap the star on any profile!</div></div>';
+        return;
+      }
+      const favProfiles = favorites.map(id => otherProfiles.find(p => p.id === id)).filter(Boolean);
+      list.innerHTML = '<div class="profile-grid">' + favProfiles.map(p => `
+      <div class="profile-card" onclick="openProfile('${p.id}')">
+        <button class="btn-icon" style="position:absolute; top:12px; right:12px; font-size:1.3rem;" onclick="event.stopPropagation(); toggleFavorite('${p.id}')">⭐</button>
+        <div class="p-head">
+          ${renderAvatar(p.name)}
+          <div style="flex:1;"><h3>${escapeHtml(p.name)}</h3></div>
+        </div>
+        <div class="bio">${escapeHtml(p.bio)}</div>
+      </div>
+    `).join('') + '</div>';
+    }
+
+    function openProfile(id) {
+      const p = otherProfiles.find(x => x.id === id);
+      if (!p) return;
+      p.views = (p.views || 0) + 1;
+      localStorage.setItem(STORAGE.others, JSON.stringify(otherProfiles));
+      document.querySelectorAll('.panel').forEach(x => { x.classList.remove('active'); x.style.display = 'none'; });
+      const panel = document.getElementById('panel-answer');
+      panel.style.display = 'block';
+      panel.classList.add('active');
+      renderAnswerForm(p);
+    }
+    function backToBrowse() { switchTab('browse'); }
+
+    // ---------- Answer Form (new: step-by-step + all-at-once + draft) ----------
+    let formState = { profileId: null, mode: 'step', step: 0, answers: {}, skipped: [] };
+
+    function renderAnswerForm(p) {
+      formState = { profileId: p.id, mode: 'step', step: 0, answers: {}, skipped: [] };
+      // Check for draft
+      const draft = drafts[ p.id ];
+      const c = document.getElementById('answerContent');
+      c.innerHTML = `
+      <div style="display:flex; gap:14px; align-items:center; margin-bottom:14px;">
+        ${renderAvatar(p.name, 'lg')}
+        <div style="flex:1;">
+          <h2 style="color:var(--accent1);">${escapeHtml(p.name)}'s Questions</h2>
+          <p style="color:var(--text-mute); font-size:0.9rem; margin-top:4px;">Score ${p.threshold}%+ to earn a date 💖</p>
+        </div>
+      </div>
+      <div style="color:var(--text-soft); font-size:0.95rem; margin-bottom:10px;">${escapeHtml(p.bio)}</div>
+      ${(p.interests || []).length ? `<div class="tags">${p.interests.map(i => `<span class="tag interest">${escapeHtml(i)}</span>`).join('')}</div>` : ''}
+      <div style="display:flex; gap:8px; margin:14px 0; flex-wrap:wrap;">
+        <button class="btn-secondary" style="padding:8px 14px; font-size:0.85rem;" onclick="setFormMode('step')">📝 Step-by-step</button>
+        <button class="btn-secondary" style="padding:8px 14px; font-size:0.85rem;" onclick="setFormMode('all')">📋 All at once</button>
+      </div>
+      ${draft ? `
+        <div class="draft-banner">
+          <div>📝 You have a saved draft from ${new Date(draft.savedAt).toLocaleString()}</div>
+          <div style="display:flex; gap:6px;">
+            <button class="btn-secondary" style="padding:6px 10px; font-size:0.8rem;" onclick="resumeDraft()">Resume</button>
+            <button class="btn-danger" onclick="clearDraft('${p.id}')">Discard</button>
+          </div>
+        </div>
+      ` : ''}
+      <div id="formContainer"></div>
+    `;
+      renderFormContainer(p);
+    }
+
+    function setFormMode(mode) {
+      formState.mode = mode;
+      formState.step = 0;
+      const p = otherProfiles.find(x => x.id === formState.profileId);
+      renderFormContainer(p);
+    }
+
+    function renderFormContainer(p) {
+      const container = document.getElementById('formContainer');
+      const visibleQs = getVisibleQuestions(p);
+      if (formState.mode === 'step')
+      {
+        renderStepForm(p, visibleQs);
+      } else
+      {
+        renderAllAtOnceForm(p, visibleQs);
+      }
+    }
+
+    function getVisibleQuestions(p) {
+      return p.questions.filter((q, i) => {
+        if (!q.condition) return true;
+        const [ qIdxStr, value ] = q.condition.split(':');
+        const qIdx = parseInt(qIdxStr.slice(1));
+        const prevAnswer = formState.answers[ qIdx ];
+        if (prevAnswer === undefined || prevAnswer === null) return false;
+        if (Array.isArray(prevAnswer)) return prevAnswer.includes(value);
+        return String(prevAnswer).toLowerCase() === String(value).toLowerCase();
+      }).map((q, _, arr) => ({ ...q, _origIdx: p.questions.indexOf(q) }));
+    }
+
+    function renderStepForm(p, visibleQs) {
+      const container = document.getElementById('formContainer');
+      if (!visibleQs.length)
+      {
+        container.innerHTML = '<div class="empty-state"><div class="emoji">🤔</div><div>No questions to answer based on your previous responses.</div></div>';
+        return;
+      }
+      if (formState.step >= visibleQs.length) formState.step = visibleQs.length - 1;
+      const q = visibleQs[ formState.step ];
+      const answered = formState.answers[ q._origIdx ] !== undefined && formState.answers[ q._origIdx ] !== null && formState.answers[ q._origIdx ] !== '';
+      const skipped = formState.skipped.includes(q._origIdx);
+      const progress = Math.round(((formState.step + (answered ? 1 : 0)) / visibleQs.length) * 100);
+
+      container.innerHTML = `
+      <div class="progress-wrap">
+        <div class="progress-header">
+          <span class="progress-label">Question ${formState.step + 1} of ${visibleQs.length}</span>
+          <span class="progress-count">${progress}%</span>
+        </div>
+        <div class="progress-bar"><div class="progress-fill" style="width:${progress}%"></div></div>
+        <div class="progress-meta">
+          <span>⏱️ ~${estimateTime(visibleQs.slice(formState.step))} min left</span>
+          <button class="btn-ghost" style="padding:2px 8px; font-size:0.75rem;" onclick="saveDraft()">💾 Save draft</button>
+        </div>
+      </div>
+      <div class="step-dots">
+        ${visibleQs.map((qq, i) => {
+        const a = formState.answers[ qq._origIdx ];
+        const isAnswered = a !== undefined && a !== null && a !== '';
+        const isSkipped = formState.skipped.includes(qq._origIdx);
+        const isCurrent = i === formState.step;
+        return `<div class="step-dot ${isCurrent ? 'current' : (isAnswered ? 'answered' : (isSkipped ? 'skipped' : ''))}" onclick="jumpToStep(${i})" title="Q${i + 1}"></div>`;
+      }).join('')}
+      </div>
+      <div class="step-question" id="stepQuestion">
+        <div class="question-card ${q.dealbreaker ? 'dealbreaker' : ''}">
+          <div class="q-head">
+            <div class="q-text">
+              ${escapeHtml(q.text)}
+              ${q.required !== false ? '<span style="color:var(--danger);"> *</span>' : '<span style="color:var(--text-mute); font-size:0.8rem;"> (optional)</span>'}
+            </div>
+          </div>
+          ${q.hint ? `<div class="q-hint">💡 ${escapeHtml(q.hint)}</div>` : ''}
+          <div class="q-meta" style="margin-bottom:10px;">
+            <span class="pill category">${catLabel(q.category)}</span>
+            <span class="pill weight-${q.weight}">${q.weight}x</span>
+            ${q.dealbreaker ? '<span class="pill dealbreaker">💥 Dealbreaker</span>' : ''}
+          </div>
+          ${renderInput(q, q._origIdx)}
+        </div>
+      </div>
+      <div class="step-nav">
+        <button class="btn-secondary" onclick="prevStep()" ${formState.step === 0 ? 'disabled style="opacity:0.4;"' : ''}>← Back</button>
+        ${q.required === false ? `<button class="btn-ghost" onclick="skipStep()">Skip</button>` : ''}
+        ${formState.step === visibleQs.length - 1
+          ? `<button class="btn-primary" onclick="goToReview()">Review & Submit →</button>`
+          : `<button class="btn-primary" onclick="nextStep()">Next →</button>`}
+      </div>
+    `;
+      attachInputHandlers(q, q._origIdx);
+    }
+
+    function renderAllAtOnceForm(p, visibleQs) {
+      const container = document.getElementById('formContainer');
+      const answeredCount = visibleQs.filter(q => {
+        const a = formState.answers[ q._origIdx ];
+        return a !== undefined && a !== null && a !== '';
+      }).length;
+      const progress = Math.round((answeredCount / visibleQs.length) * 100);
+
+      container.innerHTML = `
+      <div class="progress-wrap">
+        <div class="progress-header">
+          <span class="progress-label">${answeredCount} of ${visibleQs.length} answered</span>
+          <span class="progress-count">${progress}%</span>
+        </div>
+        <div class="progress-bar"><div class="progress-fill" style="width:${progress}%"></div></div>
+        <div class="progress-meta">
+          <span>⏱️ ~${estimateTime(visibleQs)} min total</span>
+          <button class="btn-ghost" style="padding:2px 8px; font-size:0.75rem;" onclick="saveDraft()">💾 Save draft</button>
+        </div>
+      </div>
+      <form id="allAtOnceForm">
+        ${visibleQs.map((q, i) => `
+          <div class="question-card ${q.dealbreaker ? 'dealbreaker' : ''}" style="margin-top:14px;">
+            <div class="q-head">
+              <div class="q-text">
+                Q${i + 1}. ${escapeHtml(q.text)}
+                ${q.required !== false ? '<span style="color:var(--danger);"> *</span>' : '<span style="color:var(--text-mute); font-size:0.8rem;"> (optional)</span>'}
+              </div>
+            </div>
+            ${q.hint ? `<div class="q-hint">💡 ${escapeHtml(q.hint)}</div>` : ''}
+            <div class="q-meta" style="margin-bottom:8px;">
+              <span class="pill category">${catLabel(q.category)}</span>
+              <span class="pill weight-${q.weight}">${q.weight}x</span>
+              ${q.dealbreaker ? '<span class="pill dealbreaker">💥 Dealbreaker</span>' : ''}
+            </div>
+            ${renderInput(q, q._origIdx)}
+          </div>
+        `).join('')}
+        <button type="button" class="btn-primary" style="width:100%; margin-top:20px;" onclick="goToReview()">Review & Submit →</button>
+      </form>
+    `;
+      visibleQs.forEach(q => attachInputHandlers(q, q._origIdx));
+    }
+
+    function renderInput(q, origIdx) {
+      const current = formState.answers[ origIdx ];
+      if (q.type === 'yesno')
+      {
+        return `
+        <div class="yesno-toggle" data-orig-idx="${origIdx}">
+          <div class="yesno-btn ${current === 'yes' ? 'selected' : ''}" data-value="yes">👍 Yes</div>
+          <div class="yesno-btn ${current === 'no' ? 'selected' : ''}" data-value="no">👎 No</div>
+        </div>
+      `;
+      } else if (q.type === 'mc')
+      {
+        return `<div class="mc-options" data-orig-idx="${origIdx}" data-multi="false">
+        ${(q.options || []).map(o => `
+          <div class="mc-option ${current === o ? 'selected' : ''}" data-value="${escapeAttr(o)}">
+            <div class="radio"></div><span>${escapeHtml(o)}</span>
+          </div>
+        `).join('')}
+      </div>`;
+      } else if (q.type === 'mc-multi')
+      {
+        const selected = Array.isArray(current) ? current : [];
+        return `<div class="mc-options" data-orig-idx="${origIdx}" data-multi="true">
+        ${(q.options || []).map(o => `
+          <div class="mc-option ${selected.includes(o) ? 'selected' : ''}" data-value="${escapeAttr(o)}">
+            <div class="checkbox"></div><span>${escapeHtml(o)}</span>
+          </div>
+        `).join('')}
+      </div>`;
+      } else if (q.type === 'scale')
+      {
+        return `
+        <div style="display:flex; gap:8px; margin-top:8px;" data-orig-idx="${origIdx}" data-type="scale">
+          ${[ 1, 2, 3, 4, 5 ].map(n => `
+            <div class="yesno-btn ${current == n ? 'selected' : ''}" data-value="${n}" style="padding:12px;">${n}</div>
+          `).join('')}
+        </div>
+      `;
+      } else
+      {
+        return `
+        <textarea data-orig-idx="${origIdx}" placeholder="Your answer..." style="margin-top:8px;"${q.charLimit ? ` maxlength="${q.charLimit}"` : ''}>${escapeHtml(current || '')}</textarea>
+        ${q.charLimit ? `<div class="char-counter" id="counter-${origIdx}">${(current || '').length} / ${q.charLimit}</div>` : ''}
+      `;
+      }
+    }
+
+    function attachInputHandlers(q, origIdx) {
+      if (q.type === 'yesno' || q.type === 'scale')
+      {
+        const container = document.querySelector(`[data-orig-idx="${origIdx}"]`);
+        if (!container) return;
+        container.querySelectorAll('.yesno-btn').forEach(btn => {
+          btn.addEventListener('click', () => {
+            container.querySelectorAll('.yesno-btn').forEach(b => b.classList.remove('selected'));
+            btn.classList.add('selected');
+            formState.answers[ origIdx ] = q.type === 'scale' ? parseInt(btn.dataset.value) : btn.dataset.value;
+            formState.skipped = formState.skipped.filter(s => s !== origIdx);
+            onAnswerChange();
+          });
+        });
+      } else if (q.type === 'mc' || q.type === 'mc-multi')
+      {
+        const container = document.querySelector(`.mc-options[data-orig-idx="${origIdx}"]`);
+        if (!container) return;
+        const isMulti = container.dataset.multi === 'true';
+        container.querySelectorAll('.mc-option').forEach(opt => {
+          opt.addEventListener('click', () => {
+            const val = opt.dataset.value;
+            if (isMulti)
+            {
+              opt.classList.toggle('selected');
+              let current = Array.isArray(formState.answers[ origIdx ]) ? [ ...formState.answers[ origIdx ] ] : [];
+              if (opt.classList.contains('selected'))
+              {
+                if (!current.includes(val)) current.push(val);
+              } else
+              {
+                current = current.filter(v => v !== val);
+              }
+              formState.answers[ origIdx ] = current;
+            } else
+            {
+              container.querySelectorAll('.mc-option').forEach(o => o.classList.remove('selected'));
+              opt.classList.add('selected');
+              formState.answers[ origIdx ] = val;
+            }
+            formState.skipped = formState.skipped.filter(s => s !== origIdx);
+            onAnswerChange();
+          });
+        });
+      } else if (q.type === 'text')
+      {
+        const ta = document.querySelector(`textarea[data-orig-idx="${origIdx}"]`);
+        if (!ta) return;
+        ta.addEventListener('input', () => {
+          formState.answers[ origIdx ] = ta.value;
+          formState.skipped = formState.skipped.filter(s => s !== origIdx);
+          if (q.charLimit)
+          {
+            const counter = document.getElementById(`counter-${origIdx}`);
+            if (counter)
+            {
+              counter.textContent = `${ta.value.length} / ${q.charLimit}`;
+              counter.classList.toggle('warn', ta.value.length > q.charLimit * 0.8);
+              counter.classList.toggle('over', ta.value.length >= q.charLimit);
+            }
+          }
+          onAnswerChange();
+        });
+      }
+    }
+
+    function onAnswerChange() {
+      const p = otherProfiles.find(x => x.id === formState.profileId);
+      if (formState.mode === 'step') renderStepForm(p, getVisibleQuestions(p));
+      else renderAllAtOnceForm(p, getVisibleQuestions(p));
+    }
+
+    function nextStep() {
+      const p = otherProfiles.find(x => x.id === formState.profileId);
+      const visibleQs = getVisibleQuestions(p);
+      const q = visibleQs[ formState.step ];
+      // Validate required
+      if (q.required !== false)
+      {
+        const a = formState.answers[ q._origIdx ];
+        if (a === undefined || a === null || a === '' || (Array.isArray(a) && !a.length))
+        {
+          toast('Please answer this question (or skip if optional)');
+          return;
+        }
+      }
+      formState.step++;
+      const container = document.getElementById('stepQuestion');
+      if (container)
+      {
+        container.classList.add('slide-out');
+        setTimeout(() => renderFormContainer(p), 250);
+      } else
+      {
+        renderFormContainer(p);
+      }
+    }
+
+    function prevStep() {
+      if (formState.step === 0) return;
+      formState.step--;
+      const p = otherProfiles.find(x => x.id === formState.profileId);
+      renderFormContainer(p);
+    }
+
+    function skipStep() {
+      const p = otherProfiles.find(x => x.id === formState.profileId);
+      const visibleQs = getVisibleQuestions(p);
+      const q = visibleQs[ formState.step ];
+      if (!formState.skipped.includes(q._origIdx)) formState.skipped.push(q._origIdx);
+      delete formState.answers[ q._origIdx ];
+      formState.step++;
+      renderFormContainer(p);
+    }
+
+    function jumpToStep(i) {
+      formState.step = i;
+      const p = otherProfiles.find(x => x.id === formState.profileId);
+      renderFormContainer(p);
+    }
+
+    function goToReview() {
+      const p = otherProfiles.find(x => x.id === formState.profileId);
+      const visibleQs = getVisibleQuestions(p);
+      const missing = visibleQs.filter(q => {
+        if (q.required === false) return false;
+        const a = formState.answers[ q._origIdx ];
+        return a === undefined || a === null || a === '' || (Array.isArray(a) && !a.length);
+      });
+      const container = document.getElementById('formContainer');
+      container.innerHTML = `
+      <div class="progress-wrap">
+        <div class="progress-header">
+          <span class="progress-label">📋 Review Your Answers</span>
+          <span class="progress-count">${visibleQs.length - missing.length}/${visibleQs.length}</span>
+        </div>
+        <div class="progress-bar"><div class="progress-fill" style="width:${Math.round(((visibleQs.length - missing.length) / visibleQs.length) * 100)}%"></div></div>
+      </div>
+      ${missing.length ? `<div class="draft-banner" style="background:#f8d7da; border-color:var(--danger); color:#721c24;">
+        <div>⚠️ ${missing.length} required question${missing.length !== 1 ? 's' : ''} unanswered</div>
+      </div>` : ''}
+      <div class="review-list">
+        ${visibleQs.map((q, i) => {
+        const a = formState.answers[ q._origIdx ];
+        const answered = a !== undefined && a !== null && a !== '' && !(Array.isArray(a) && !a.length);
+        const display = Array.isArray(a) ? a.join(', ') : (a || '');
+        return `
+            <div class="review-item ${answered ? '' : 'unanswered'}" onclick="jumpToStep(${i})">
+              <span class="review-status">${answered ? '✅' : '⚠️'}</span>
+              <div class="review-q">Q${i + 1}. ${escapeHtml(q.text)}</div>
+              <div class="review-a">${answered ? escapeHtml(display) : 'Not answered'}</div>
+            </div>
+          `;
+      }).join('')}
+      </div>
+      <div style="display:flex; gap:8px; margin-top:16px;">
+        <button class="btn-secondary" style="flex:1;" onclick="setFormMode('${formState.mode}')">← Edit Answers</button>
+        <button class="btn-primary" style="flex:1;" onclick="submitForm()" ${missing.length ? 'disabled style="opacity:0.5;"' : ''}>💘 Submit</button>
+      </div>
+    `;
+    }
+
+    function submitForm() {
+      const p = otherProfiles.find(x => x.id === formState.profileId);
+      if (!p) return;
+      // Build fake FormData-like structure
+      const fd = {
+        get: (key) => {
+          const idx = parseInt(key.slice(1));
+          const a = formState.answers[ idx ];
+          if (a === undefined || a === null) return '';
+          if (Array.isArray(a)) return a.join(', ');
+          return String(a);
+        }
+      };
+      submitAnswers(p, fd);
+      // Clear draft
+      delete drafts[ p.id ];
+      localStorage.setItem(STORAGE.drafts, JSON.stringify(drafts));
+    }
+
+    function saveDraft() {
+      drafts[ formState.profileId ] = {
+        answers: formState.answers,
+        skipped: formState.skipped,
+        step: formState.step,
+        mode: formState.mode,
+        savedAt: new Date().toISOString()
+      };
+      localStorage.setItem(STORAGE.drafts, JSON.stringify(drafts));
+      toast('Draft saved 💾');
+    }
+
+    function resumeDraft() {
+      const draft = drafts[ formState.profileId ];
+      if (!draft) return;
+      formState.answers = draft.answers || {};
+      formState.skipped = draft.skipped || [];
+      formState.step = draft.step || 0;
+      formState.mode = draft.mode || 'step';
+      const p = otherProfiles.find(x => x.id === formState.profileId);
+      renderFormContainer(p);
+      toast('Draft resumed 📝');
+    }
+
+    function clearDraft(id) {
+      delete drafts[ id ];
+      localStorage.setItem(STORAGE.drafts, JSON.stringify(drafts));
+      const p = otherProfiles.find(x => x.id === id);
+      renderAnswerForm(p);
+      toast('Draft discarded');
+    }
+
+    function submitAnswers(p, fd) {
+      let weightedScore = 0;
+      let totalWeight = 0;
+      const answers = [];
+      const breakdown = [];
+      let dealbreakerFailed = false;
+
+      p.questions.forEach((q, i) => {
+        const val = (fd.get('q' + i) || '').toString().trim();
+        answers.push({ q: q.text, a: val });
+        const w = q.weight || 1;
+        totalWeight += w;
+
+        let correct = false;
+        if (q.autoPass || q.type === 'text' && !q.keywords)
+        {
+          correct = true;
+          weightedScore += w;
+        } else if (q.type === 'text' && q.keywords && q.keywords.length)
+        {
+          const lower = val.toLowerCase();
+          correct = q.keywords.some(k => lower.includes(k.toLowerCase()));
+          if (correct) weightedScore += w;
+        } else if (q.type === 'mc-multi')
+        {
+          const given = val.split(',').map(s => s.trim()).filter(Boolean);
+          const expected = Array.isArray(q.correct) ? q.correct : [ q.correct ];
+          const matchCount = given.filter(g => expected.includes(g)).length;
+          const wrongCount = given.filter(g => !expected.includes(g)).length;
+          const score = Math.max(0, (matchCount - wrongCount) / expected.length);
+          correct = score === 1;
+          weightedScore += w * score;
+        } else if (q.type === 'scale')
+        {
+          const given = parseInt(val);
+          const expected = parseInt(q.correct);
+          const diff = Math.abs(given - expected);
+          const score = Math.max(0, 1 - (diff / 4));
+          correct = diff === 0;
+          weightedScore += w * score;
+        } else
+        {
+          correct = val.toLowerCase() === String(q.correct).toLowerCase();
+          if (correct) weightedScore += w;
+        }
+
+        if (q.dealbreaker && !correct) dealbreakerFailed = true;
+
+        breakdown.push({
+          q: q.text,
+          yourAnswer: val,
+          correctAnswer: q.type === 'text' ? '—' : (Array.isArray(q.correct) ? q.correct.join(', ') : q.correct),
+          correct,
+          weight: w,
+          dealbreaker: q.dealbreaker,
+          category: q.category
+        });
+      });
+
+      const score = totalWeight ? Math.round((weightedScore / totalWeight) * 100) : 0;
+      const passed = !dealbreakerFailed && score >= p.threshold;
+
+      myAnswers[ p.id ] = { score, answers, breakdown, date: new Date().toISOString(), passed, dealbreakerFailed };
+      localStorage.setItem(STORAGE.answers, JSON.stringify(myAnswers));
+
+      stats.attempts++;
+      const today = new Date().toDateString();
+      if (stats.lastActive !== today)
+      {
+        const yesterday = new Date(Date.now() - 86400000).toDateString();
+        stats.streak = stats.lastActive === yesterday ? stats.streak + 1 : 1;
+        stats.lastActive = today;
+      }
+      if (passed)
+      {
+        stats.matches++;
+        stats.points += 100;
+        stats.xp += 100;
+        playSound('match');
+      } else
+      {
+        stats.points += 20;
+        stats.xp += 20;
+        playSound('fail');
+      }
+      checkLevelUp();
+      localStorage.setItem(STORAGE.stats, JSON.stringify(stats));
+
+      if (myProfile.name)
+      {
+        const key = myProfile.name;
+        if (!othersAnswers[ key ]) othersAnswers[ key ] = [];
+        othersAnswers[ key ].push({ by: 'You', score, date: new Date().toISOString(), passed, targetName: p.name, targetId: p.id });
+        localStorage.setItem(STORAGE.othersAnswers, JSON.stringify(othersAnswers));
+      }
+
+      if (passed && !chats[ p.id ])
+      {
+        chats[ p.id ] = {
+          profileId: p.id, profileName: p.name,
+          messages: [ { from: 'them', text: `Hey! You passed my questions with ${score}% — I'm impressed 💖`, date: new Date().toISOString() } ]
+        };
+        localStorage.setItem(STORAGE.chats, JSON.stringify(chats));
+      }
+
+      showResult(p, score, passed, breakdown, dealbreakerFailed);
+      updateBadges();
+      checkAchievements();
+      incrementDailyChallenge();
+    }
+
+    function checkLevelUp() {
+      const xpNeeded = stats.level * 100;
+      while (stats.xp >= xpNeeded)
+      {
+        stats.xp -= xpNeeded;
+        stats.level++;
+        toast(`🎉 Level up! You're now level ${stats.level}`);
+        playSound('achievement');
+      }
+    }
+
+    function checkAchievements() {
+      const newAchievements = ACHIEVEMENTS.filter(a => !stats.achievements.includes(a.id) && a.condition(stats));
+      if (newAchievements.length)
+      {
+        newAchievements.forEach(a => {
+          stats.achievements.push(a.id);
+          stats.points += 50;
+          toast(`🏆 ${a.name}!`);
+          playSound('achievement');
+        });
+        localStorage.setItem(STORAGE.stats, JSON.stringify(stats));
+      }
+    }
+
+    function showResult(p, score, passed, breakdown, dealbreakerFailed) {
+      const c = document.getElementById('answerContent');
+      c.innerHTML = `
+      <div style="text-align:center; padding:20px 10px;">
+        <div style="font-size:5rem; margin-bottom:10px; animation: pop 0.6s ease;">${passed ? '💖' : dealbreakerFailed ? '💥' : '💔'}</div>
+        <h2 style="font-size:2rem; margin-bottom:10px; ${passed ? 'background:linear-gradient(135deg, var(--accent1), var(--accent2)); -webkit-background-clip:text; -webkit-text-fill-color:transparent;' : 'color:var(--text-mute);'}">${passed ? "It's a match!" : dealbreakerFailed ? 'Dealbreaker hit!' : 'Not quite...'}</h2>
+        <p style="color:var(--text-soft);">You scored <strong>${score}%</strong> on ${escapeHtml(p.name)}'s questions.</p>
+        <div style="background:var(--border); height:12px; border-radius:6px; overflow:hidden; margin:16px 0;">
+          <div style="height:100%; background:linear-gradient(90deg, var(--accent1), var(--accent2)); border-radius:6px; width:0%; transition:width 0.8s ease;" id="scoreFill"></div>
+        </div>
+        <p style="font-size:0.85rem; color:var(--text-mute);">Threshold: ${p.threshold}%</p>
+        ${passed ? `
+          <button class="btn-primary" style="width:100%; margin-top:20px;" onclick="openChat('${p.id}')">💬 Start Chatting</button>
+        ` : `
+          <p style="margin-top:20px; color:var(--text-mute);">Try again, or browse other profiles!</p>
+        `}
+        <button class="btn-secondary" style="margin-top:12px; width:100%;" onclick="backToBrowse()">Browse More</button>
+      </div>
+    `;
+      setTimeout(() => {
+        const fill = document.getElementById('scoreFill');
+        if (fill) fill.style.width = score + '%';
+      }, 100);
+      if (passed) launchConfetti();
+    }
+
+    function launchConfetti() {
+      const colors = [ '#ff6b9d', '#c06eff', '#4facfe', '#43e97b', '#fa709a', '#f6d365', '#fee140' ];
+      for (let i = 0; i < 60; i++)
+      {
+        const piece = document.createElement('div');
+        piece.className = 'confetti-piece';
+        piece.style.left = Math.random() * 100 + 'vw';
+        piece.style.background = colors[ Math.floor(Math.random() * colors.length) ];
+        piece.style.animationDuration = (2 + Math.random() * 2) + 's';
+        piece.style.animationDelay = Math.random() * 0.5 + 's';
+        piece.style.transform = `rotate(${Math.random() * 360}deg)`;
+        if (Math.random() > 0.5) piece.style.borderRadius = '50%';
+        document.body.appendChild(piece);
+        setTimeout(() => piece.remove(), 4500);
+      }
+    }
+
+    // ---------- Matches ----------
+    function renderMatches() {
+      const list = document.getElementById('matchesList');
+      if (!myProfile.name)
+      {
+        list.innerHTML = '<div class="empty-state"><div class="emoji">👤</div><div>Create your profile first!</div></div>';
+        return;
+      }
+      const entries = (othersAnswers[ myProfile.name ] || []);
+      const myMatches = Object.entries(myAnswers).filter(([ id, a ]) => a.passed).map(([ id, a ]) => {
+        const p = otherProfiles.find(x => x.id === id);
+        return p ? { id, name: p.name, score: a.score, date: a.date } : null;
+      }).filter(Boolean);
+
+      if (!entries.length && !myMatches.length)
+      {
+        list.innerHTML = '<div class="empty-state"><div class="emoji">🌷</div><div>No matches yet.</div></div>';
+        return;
+      }
+      let html = '';
+      if (myMatches.length)
+      {
+        html += `<h3 style="color:var(--accent2); margin-bottom:10px;">💖 People you matched with</h3>`;
+        html += '<div class="profile-grid">' + myMatches.map(m => `
+        <div class="profile-card" onclick="openChat('${m.id}')">
+          <div class="p-head">
+            ${renderAvatar(m.name)}
+            <div style="flex:1;"><h3>${escapeHtml(m.name)}</h3><div class="views">💬 Tap to chat</div></div>
+          </div>
+          <div class="stats"><span>You scored ${m.score}%</span><span>${new Date(m.date).toLocaleDateString()}</span></div>
+        </div>
+      `).join('') + '</div>';
+      }
+      if (entries.length)
+      {
+        html += `<h3 style="color:var(--accent2); margin:20px 0 10px;">💌 People who answered YOUR questions</h3>`;
+        html += entries.map(e => `
+        <div class="question-card" style="margin-top:8px;">
+          <div class="q-head">
+            <div class="q-text">${escapeHtml(e.by || 'Someone')} → ${escapeHtml(e.targetName || 'you')}</div>
+            <span class="badge ${e.passed ? 'match' : 'fail'}">${e.passed ? '💖 Match' : e.score + '%'}</span>
+          </div>
+          <div class="q-meta">${new Date(e.date).toLocaleString()}</div>
+        </div>
+      `).join('');
+      }
+      list.innerHTML = html;
+    }
+
+    // ---------- Chat ----------
+    function renderChatList() {
+      const list = document.getElementById('chatList');
+      const entries = Object.values(chats);
+      if (!entries.length)
+      {
+        list.innerHTML = '<div class="empty-state"><div class="emoji">💬</div><div>No chats yet. Match with someone!</div></div>';
+        return;
+      }
+      list.innerHTML = '<h2 style="color:var(--text); margin-bottom:10px;">💬 Your Chats</h2><div style="display:grid; gap:10px;">' + entries.map(c => {
+        const last = c.messages[ c.messages.length - 1 ];
+        return `
+        <div style="display:flex; align-items:center; gap:12px; padding:12px; background:var(--card-soft); border-radius:14px; cursor:pointer;" onclick="openChat('${c.profileId}')">
+          ${renderAvatar(c.profileName)}
+          <div style="flex:1;"><h4 style="color:var(--accent1); font-size:1rem;">${escapeHtml(c.profileName)}</h4><p style="color:var(--text-mute); font-size:0.82rem;">${last ? escapeHtml(last.text) : 'Say hi!'}</p></div>
+          <span style="color:var(--text-mute);">→</span>
+        </div>
+      `;
+      }).join('') + '</div>';
+    }
+
+    let currentChatId = null;
+    function openChat(id) {
+      currentChatId = id;
+      const p = otherProfiles.find(x => x.id === id);
+      if (!p) return;
+      if (!chats[ id ])
+      {
+        chats[ id ] = { profileId: id, profileName: p.name, messages: [ { from: 'them', text: 'Hey there! 👋', date: new Date().toISOString() } ] };
+        localStorage.setItem(STORAGE.chats, JSON.stringify(chats));
+      }
+      document.querySelectorAll('.panel').forEach(x => { x.classList.remove('active'); x.style.display = 'none'; });
+      const panel = document.getElementById('panel-chatWindow');
+      panel.style.display = 'block';
+      panel.classList.add('active');
+      renderChatWindow();
+    }
+    function backToChat() { switchTab('chat'); }
+
+    function renderChatWindow() {
+      const c = chats[ currentChatId ];
+      document.getElementById('chatHeader').innerHTML = `
+      ${renderAvatar(c.profileName)}
+      <div><h3 style="color:var(--accent1);">${escapeHtml(c.profileName)}</h3><div style="font-size:0.8rem; color:var(--text-mute);">Online now</div></div>
+    `;
+      const msgs = document.getElementById('chatMessages');
+      msgs.innerHTML = c.messages.map(m => `
+      <div style="max-width:75%; padding:10px 14px; border-radius:16px; font-size:0.92rem; line-height:1.4; align-self:${m.from === 'me' ? 'flex-end' : 'flex-start'}; background:${m.from === 'me' ? 'linear-gradient(135deg, var(--accent1), var(--accent2))' : 'var(--card-soft)'}; color:${m.from === 'me' ? 'white' : 'var(--text)'};">
+        ${escapeHtml(m.text)}
+        <span style="display:block; font-size:0.7rem; opacity:0.7; margin-top:4px;">${new Date(m.date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+      </div>
+    `).join('');
+      msgs.scrollTop = msgs.scrollHeight;
+      document.getElementById('chatForm').onsubmit = e => {
+        e.preventDefault();
+        const input = document.getElementById('chatInput');
+        const text = input.value.trim();
+        if (!text) return;
+        c.messages.push({ from: 'me', text, date: new Date().toISOString() });
+        input.value = '';
+        localStorage.setItem(STORAGE.chats, JSON.stringify(chats));
+        renderChatWindow();
+        playSound('message');
+        setTimeout(() => {
+          const replies = [ "Haha that's so true 😄", "I love that!", "We should try that 💫", "You're making me smile 🥰", "Same!", "What's your go-to comfort food?", "That's such a good answer 💖" ];
+          c.messages.push({ from: 'them', text: replies[ Math.floor(Math.random() * replies.length) ], date: new Date().toISOString() });
+          localStorage.setItem(STORAGE.chats, JSON.stringify(chats));
+          if (currentChatId === c.profileId) renderChatWindow();
+        }, 1200);
+      };
+    }
+
+    // ---------- Stats ----------
+    function renderStats() {
+      document.getElementById('levelDisplay').textContent = stats.level;
+      document.getElementById('pointsDisplay').textContent = stats.points;
+      const xpNeeded = stats.level * 100;
+      document.getElementById('levelFill').style.width = ((stats.xp / xpNeeded) * 100) + '%';
+      document.getElementById('levelProgress').textContent = `${stats.xp} / ${xpNeeded} XP to next level`;
+      document.getElementById('statMatches').textContent = stats.matches;
+      document.getElementById('statAttempts').textContent = stats.attempts;
+      document.getElementById('statStreak').textContent = stats.streak;
+      document.getElementById('statViews').textContent = myProfile.views || 0;
+      document.getElementById('achievements').innerHTML = ACHIEVEMENTS.map(a => {
+        const unlocked = stats.achievements.includes(a.id);
+        return `<div class="achievement ${unlocked ? 'unlocked' : 'locked'}"><div class="ach-icon">${a.icon}</div><div class="ach-name">${a.name}</div><div class="ach-desc">${a.desc}</div></div>`;
+      }).join('');
+    }
+
+    // ---------- Settings ----------
+    function shareProfile() {
+      if (!myProfile.name) { toast('Save your profile first'); return; }
+      const data = btoa(unescape(encodeURIComponent(JSON.stringify(myProfile))));
+      const url = location.origin + location.pathname + '#import=' + data;
+      navigator.clipboard.writeText(url).then(() => toast('Link copied! 📋')).catch(() => prompt('Copy this link:', url));
+    }
+    function importProfile() {
+      const hash = location.hash;
+      if (hash.startsWith('#import=')) loadFromHash(hash.slice(8));
+      else
+      {
+        const data = prompt('Paste the shared profile link:');
+        if (!data) return;
+        const match = data.match(/#import=(.+)/);
+        if (match) loadFromHash(match[ 1 ]);
+        else toast('Invalid link');
+      }
+    }
+    function loadFromHash(data) {
+      try
+      {
+        myProfile = JSON.parse(decodeURIComponent(escape(atob(data))));
+        localStorage.setItem(STORAGE.my, JSON.stringify(myProfile));
+        loadMyProfile();
+        toast('Profile imported! 🎉');
+        switchTab('create');
+      } catch (e) { toast('Could not import profile'); }
+    }
+    function exportData() {
+      const data = { profile: myProfile, answers: myAnswers, chats, stats, favorites };
+      const blob = new Blob([ JSON.stringify(data, null, 2) ], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'matchform-data-' + new Date().toISOString().slice(0, 10) + '.json';
+      a.click();
+      URL.revokeObjectURL(url);
+      toast('Data exported 💾');
+    }
+    function resetAll() {
+      if (!confirm('Erase all data?')) return;
+      Object.values(STORAGE).forEach(k => { if (k !== STORAGE.theme && k !== STORAGE.sound) localStorage.removeItem(k); });
+      myProfile = { name: '', bio: '', interests: [], questions: [], threshold: 70, views: 0 };
+      myAnswers = {}; othersAnswers = {}; chats = {}; favorites = []; drafts = {};
+      stats = { points: 0, level: 1, xp: 0, matches: 0, attempts: 0, streak: 0, lastActive: null, achievements: [] };
+      loadMyProfile(); updateBadges(); renderStats();
+      toast('All data reset 🗑️');
+      switchTab('create');
+    }
+
+    if (location.hash.startsWith('#import=')) setTimeout(() => loadFromHash(location.hash.slice(8)), 300);
+
+    // ---------- Utils ----------
+    function escapeHtml(s) { return String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[ c ])); }
+    function escapeAttr(s) { return escapeHtml(s); }
+    let toastTimer;
+    function toast(msg) {
+      const t = document.getElementById('toast');
+      t.textContent = msg;
+      t.classList.add('show');
+      clearTimeout(toastTimer);
+      toastTimer = setTimeout(() => t.classList.remove('show'), 2200);
+    }
+
+    // ---------- Daily Challenge ----------
+    function checkDailyChallenge() {
+      const today = new Date().toDateString();
+      let daily = JSON.parse(localStorage.getItem('mf_daily_v3') || 'null') || { date: today, target: 3, progress: 0, completed: false };
+      if (daily.date !== today)
+      {
+        daily = { date: today, target: 3, progress: 0, completed: false };
+        localStorage.setItem('mf_daily_v3', JSON.stringify(daily));
+      }
+      return daily;
+    }
+    function updateDailyChallenge() {
+      const daily = checkDailyChallenge();
+      const textEl = document.getElementById('dailyChallengeText');
+      const rewardEl = document.getElementById('dailyChallengeReward');
+      if (daily.completed)
+      {
+        textEl.textContent = '✅ Challenge complete!';
+        rewardEl.textContent = '+50 XP claimed';
+      } else
+      {
+        textEl.textContent = `Answer ${daily.target} questions today (${daily.progress}/${daily.target})`;
+        rewardEl.textContent = `+50 XP remaining`;
+      }
+    }
+    function incrementDailyChallenge() {
+      const daily = checkDailyChallenge();
+      if (daily.completed) return;
+      daily.progress++;
+      if (daily.progress >= daily.target)
+      {
+        daily.completed = true;
+        stats.xp += 50;
+        stats.points += 50;
+        checkLevelUp();
+        localStorage.setItem(STORAGE.stats, JSON.stringify(stats));
+        toast('🎯 Daily challenge complete! +50 XP');
+        playSound('achievement');
+      }
+      localStorage.setItem('mf_daily_v3', JSON.stringify(daily));
+    }
+
+    function closeModal() {
+      document.getElementById('modalOverlay').classList.remove('show');
+    }
+    document.getElementById('modalOverlay').addEventListener('click', e => {
+      if (e.target.id === 'modalOverlay') closeModal();
+    });
+
+    // ---------- Init ----------
+    loadMyProfile();
+    updateBadges();
+    renderStats();
+    updateDailyChallenge();
+  </script>
+</body>
+
+</html>

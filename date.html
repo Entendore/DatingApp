@@ -1,0 +1,2721 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+<title>Spark — Find Your Match</title>
+<style>
+  :root {
+    --primary: #ff4d6d;
+    --primary-dark: #c9184a;
+    --secondary: #ff8fa3;
+    --accent: #ffb3c1;
+    --bg: #fff5f7;
+    --bg-2: #ffe5ec;
+    --card: #ffffff;
+    --text: #2b2d42;
+    --muted: #8d99ae;
+    --border: #f0f0f0;
+    --shadow: 0 10px 30px rgba(255, 77, 109, 0.15);
+    --radius: 20px;
+    --success: #22c55e;
+    --danger: #ef4444;
+    --info: #3b82f6;
+    --warning: #f59e0b;
+  }
+
+  [data-theme="dark"] {
+    --primary: #ff6b8a;
+    --primary-dark: #ff4d6d;
+    --secondary: #ff8fa3;
+    --accent: #4a2c3a;
+    --bg: #1a1a2e;
+    --bg-2: #16213e;
+    --card: #242438;
+    --text: #f0f0f5;
+    --muted: #9ca3af;
+    --border: #2d2d44;
+    --shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+
+  html, body {
+    height: 100%;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    color: var(--text);
+    background: linear-gradient(135deg, var(--bg-2) 0%, var(--accent) 100%);
+    overflow: hidden;
+    transition: background 0.3s;
+  }
+
+  body { display: flex; align-items: center; justify-content: center; }
+
+  .app {
+    width: 100%;
+    max-width: 420px;
+    height: 100%;
+    max-height: 900px;
+    background: var(--bg);
+    position: relative;
+    overflow: hidden;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.25);
+    display: flex;
+    flex-direction: column;
+    transition: background 0.3s;
+  }
+
+  @media (min-width: 500px) {
+    .app { border-radius: 32px; height: 90vh; }
+  }
+
+  /* ===== Header ===== */
+  header {
+    padding: 18px 20px 10px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+    color: white;
+    flex-shrink: 0;
+  }
+
+  .logo {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 22px;
+    font-weight: 800;
+    letter-spacing: -0.5px;
+  }
+
+  .logo-icon {
+    width: 32px; height: 32px;
+    background: white;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+  }
+
+  .header-btns { display: flex; gap: 8px; }
+
+  .header-btn {
+    background: rgba(255,255,255,0.2);
+    border: none;
+    width: 38px; height: 38px;
+    border-radius: 50%;
+    color: white;
+    font-size: 18px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: transform 0.15s, background 0.15s;
+  }
+  .header-btn:active { transform: scale(0.9); }
+  .header-btn:hover { background: rgba(255,255,255,0.3); }
+
+  /* ===== Screens ===== */
+  main {
+    flex: 1;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .screen {
+    position: absolute;
+    inset: 0;
+    padding: 16px;
+    overflow-y: auto;
+    display: none;
+    animation: fadeIn 0.3s ease;
+  }
+  .screen.active { display: flex; flex-direction: column; }
+
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  /* ===== Discover / Swipe ===== */
+  .card-stack {
+    flex: 1;
+    position: relative;
+    margin: 8px 0;
+  }
+
+  .card {
+    position: absolute;
+    inset: 0;
+    border-radius: var(--radius);
+    overflow: hidden;
+    background: var(--card);
+    box-shadow: var(--shadow);
+    cursor: grab;
+    user-select: none;
+    transition: transform 0.3s ease, opacity 0.3s ease;
+    will-change: transform;
+  }
+  .card:active { cursor: grabbing; }
+
+  .card-carousel {
+    position: relative;
+    width: 100%;
+    height: 100%;
+  }
+
+  .card-photo {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    pointer-events: none;
+    transition: opacity 0.3s;
+  }
+
+  .card-photo.active { opacity: 1; }
+  .card-photo:not(.active) { opacity: 0; }
+
+  /* Photo tap zones */
+  .tap-zone {
+    position: absolute;
+    top: 0;
+    bottom: 120px;
+    width: 33%;
+    z-index: 2;
+  }
+  .tap-zone.left { left: 0; }
+  .tap-zone.right { right: 0; }
+
+  .photo-dots {
+    position: absolute;
+    top: 12px;
+    left: 12px;
+    right: 12px;
+    display: flex;
+    gap: 4px;
+    z-index: 3;
+    pointer-events: none;
+  }
+  .photo-dot {
+    flex: 1;
+    height: 3px;
+    background: rgba(255,255,255,0.4);
+    border-radius: 2px;
+  }
+  .photo-dot.active { background: white; }
+
+  .card-info {
+    position: absolute;
+    bottom: 0; left: 0; right: 0;
+    padding: 60px 20px 20px;
+    background: linear-gradient(to top, rgba(0,0,0,0.8) 0%, rgba(0,0,0,0) 100%);
+    color: white;
+    z-index: 4;
+  }
+
+  .card-name {
+    font-size: 28px;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .card-name .age { font-weight: 400; font-size: 24px; opacity: 0.9; }
+
+  .verified-badge {
+    width: 22px; height: 22px;
+    background: var(--info);
+    border-radius: 50%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 12px;
+    font-weight: 900;
+  }
+
+  .card-location {
+    font-size: 14px;
+    opacity: 0.9;
+    margin-top: 2px;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+
+  .card-bio {
+    margin-top: 8px;
+    font-size: 14px;
+    line-height: 1.4;
+    opacity: 0.95;
+  }
+
+  .card-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-top: 10px;
+  }
+
+  .tag {
+    background: rgba(255,255,255,0.25);
+    backdrop-filter: blur(10px);
+    padding: 4px 10px;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: 500;
+  }
+
+  .compat-badge {
+    position: absolute;
+    top: 28px;
+    right: 16px;
+    background: rgba(255,255,255,0.95);
+    color: var(--primary);
+    padding: 6px 12px;
+    border-radius: 16px;
+    font-size: 12px;
+    font-weight: 700;
+    z-index: 5;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+  }
+
+  .stamp {
+    position: absolute;
+    top: 60px;
+    padding: 8px 16px;
+    border: 4px solid;
+    border-radius: 10px;
+    font-size: 32px;
+    font-weight: 900;
+    letter-spacing: 2px;
+    opacity: 0;
+    transition: opacity 0.1s;
+    pointer-events: none;
+    z-index: 5;
+  }
+  .stamp.like {
+    right: 20px;
+    color: var(--success);
+    border-color: var(--success);
+    transform: rotate(15deg);
+  }
+  .stamp.nope {
+    left: 20px;
+    color: var(--danger);
+    border-color: var(--danger);
+    transform: rotate(-15deg);
+  }
+  .stamp.super {
+    left: 50%;
+    transform: translateX(-50%);
+    color: var(--info);
+    border-color: var(--info);
+  }
+
+  /* ===== Action buttons ===== */
+  .actions {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 14px;
+    padding: 10px 0 4px;
+    flex-shrink: 0;
+  }
+
+  .action-btn {
+    width: 52px; height: 52px;
+    border-radius: 50%;
+    border: none;
+    background: var(--card);
+    box-shadow: 0 4px 14px rgba(0,0,0,0.1);
+    font-size: 22px;
+    cursor: pointer;
+    transition: transform 0.15s, box-shadow 0.15s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+  }
+  .action-btn:active { transform: scale(0.9); }
+  .action-btn:hover { box-shadow: 0 6px 20px rgba(0,0,0,0.15); }
+
+  .action-btn.nope { color: var(--danger); }
+  .action-btn.like { color: var(--success); width: 60px; height: 60px; font-size: 26px; }
+  .action-btn.super { color: var(--info); }
+  .action-btn.undo { color: var(--warning); width: 44px; height: 44px; font-size: 18px; }
+  .action-btn.boost {
+    color: #a855f7;
+    width: 44px; height: 44px;
+    font-size: 18px;
+    background: linear-gradient(135deg, #a855f7, #ec4899);
+    color: white;
+    animation: boostGlow 2s ease-in-out infinite;
+  }
+
+  @keyframes boostGlow {
+    0%, 100% { box-shadow: 0 4px 14px rgba(168, 85, 247, 0.3); }
+    50% { box-shadow: 0 4px 20px rgba(168, 85, 247, 0.6); }
+  }
+
+  .action-btn.disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+    pointer-events: none;
+  }
+
+  /* ===== Empty state ===== */
+  .empty {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    color: var(--muted);
+    padding: 40px 20px;
+  }
+  .empty-icon { font-size: 64px; margin-bottom: 16px; }
+  .empty h3 { color: var(--text); margin-bottom: 8px; font-size: 20px; }
+  .empty p { font-size: 14px; line-height: 1.5; }
+  .empty button {
+    margin-top: 20px;
+    padding: 12px 28px;
+    background: var(--primary);
+    color: white;
+    border: none;
+    border-radius: 24px;
+    font-weight: 600;
+    cursor: pointer;
+    font-size: 14px;
+  }
+
+  /* ===== Matches screen ===== */
+  .matches-header {
+    padding: 8px 4px 16px;
+    font-size: 18px;
+    font-weight: 700;
+  }
+
+  .new-matches {
+    display: flex;
+    gap: 12px;
+    overflow-x: auto;
+    padding: 4px 4px 16px;
+    margin: 0 -4px;
+    scrollbar-width: none;
+  }
+  .new-matches::-webkit-scrollbar { display: none; }
+
+  .new-match {
+    flex-shrink: 0;
+    width: 80px;
+    text-align: center;
+    cursor: pointer;
+    position: relative;
+  }
+  .new-match-img {
+    width: 80px; height: 80px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 3px solid var(--primary);
+    padding: 2px;
+    background: var(--card);
+  }
+  .new-match-name {
+    font-size: 12px;
+    margin-top: 6px;
+    font-weight: 500;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .new-badge {
+    position: absolute;
+    top: 0; right: 0;
+    background: var(--primary);
+    color: white;
+    width: 20px; height: 20px;
+    border-radius: 50%;
+    font-size: 11px;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 2px solid var(--bg);
+  }
+
+  .chat-list {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+
+  .chat-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 8px;
+    border-radius: 12px;
+    cursor: pointer;
+    transition: background 0.15s;
+  }
+  .chat-item:hover { background: rgba(255,77,109,0.06); }
+
+  .chat-avatar {
+    width: 56px; height: 56px;
+    border-radius: 50%;
+    object-fit: cover;
+    flex-shrink: 0;
+    position: relative;
+  }
+  .online-dot {
+    position: absolute;
+    bottom: 2px; right: 2px;
+    width: 12px; height: 12px;
+    background: var(--success);
+    border-radius: 50%;
+    border: 2px solid var(--bg);
+  }
+
+  .chat-info {
+    flex: 1;
+    min-width: 0;
+  }
+  .chat-name {
+    font-weight: 600;
+    font-size: 15px;
+    margin-bottom: 2px;
+  }
+  .chat-preview {
+    font-size: 13px;
+    color: var(--muted);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .chat-time {
+    font-size: 11px;
+    color: var(--muted);
+    flex-shrink: 0;
+  }
+  .unread-dot {
+    width: 8px; height: 8px;
+    background: var(--primary);
+    border-radius: 50%;
+    margin-left: 6px;
+  }
+
+  /* ===== Likes You screen ===== */
+  .likes-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+    margin-top: 12px;
+  }
+
+  .likes-card {
+    position: relative;
+    aspect-ratio: 3/4;
+    border-radius: 16px;
+    overflow: hidden;
+    cursor: pointer;
+    box-shadow: var(--shadow);
+  }
+  .likes-card img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+  .likes-card.blurred img {
+    filter: blur(18px);
+    transform: scale(1.1);
+  }
+  .likes-card-info {
+    position: absolute;
+    bottom: 0; left: 0; right: 0;
+    padding: 20px 10px 10px;
+    background: linear-gradient(to top, rgba(0,0,0,0.7), transparent);
+    color: white;
+  }
+  .likes-card-name {
+    font-weight: 600;
+    font-size: 14px;
+  }
+  .likes-card-age {
+    font-size: 12px;
+    opacity: 0.9;
+  }
+  .likes-card.blurred .likes-card-info {
+    backdrop-filter: blur(2px);
+  }
+  .premium-lock {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: rgba(255,255,255,0.95);
+    padding: 8px 14px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--primary);
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+
+  .likes-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 4px;
+  }
+  .likes-title {
+    font-size: 20px;
+    font-weight: 700;
+  }
+  .likes-count {
+    background: var(--primary);
+    color: white;
+    padding: 4px 12px;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: 700;
+  }
+
+  /* ===== Profile screen ===== */
+  .profile-card {
+    background: var(--card);
+    border-radius: var(--radius);
+    padding: 24px;
+    box-shadow: var(--shadow);
+    text-align: center;
+    margin-bottom: 16px;
+    position: relative;
+  }
+
+  .profile-avatar-wrap {
+    position: relative;
+    display: inline-block;
+    margin-bottom: 12px;
+  }
+  .profile-avatar {
+    width: 120px; height: 120px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 4px solid var(--primary);
+  }
+  .profile-edit-btn {
+    position: absolute;
+    bottom: 0; right: 0;
+    width: 36px; height: 36px;
+    background: var(--primary);
+    color: white;
+    border: 3px solid var(--card);
+    border-radius: 50%;
+    cursor: pointer;
+    font-size: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .profile-name {
+    font-size: 22px;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+  }
+  .profile-age {
+    color: var(--muted);
+    margin-bottom: 16px;
+    font-size: 14px;
+  }
+
+  .completion-bar {
+    background: var(--border);
+    height: 6px;
+    border-radius: 3px;
+    overflow: hidden;
+    margin: 12px 0 4px;
+  }
+  .completion-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--primary), var(--secondary));
+    transition: width 0.5s;
+  }
+  .completion-text {
+    font-size: 11px;
+    color: var(--muted);
+  }
+
+  .profile-stats {
+    display: flex;
+    justify-content: space-around;
+    padding-top: 16px;
+    border-top: 1px solid var(--border);
+  }
+  .stat { text-align: center; }
+  .stat-num {
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--primary);
+  }
+  .stat-label {
+    font-size: 11px;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  .settings {
+    background: var(--card);
+    border-radius: var(--radius);
+    overflow: hidden;
+    box-shadow: var(--shadow);
+  }
+
+  .setting-item {
+    padding: 14px 18px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 1px solid var(--border);
+    font-size: 14px;
+    cursor: pointer;
+  }
+  .setting-item:last-child { border-bottom: none; }
+  .setting-item:hover { background: rgba(255,77,109,0.04); }
+
+  .setting-item label {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    cursor: pointer;
+    flex: 1;
+  }
+  .setting-icon {
+    width: 32px; height: 32px;
+    border-radius: 10px;
+    background: var(--accent);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+  }
+
+  .toggle {
+    position: relative;
+    width: 44px; height: 24px;
+    background: var(--border);
+    border-radius: 12px;
+    cursor: pointer;
+    transition: background 0.2s;
+    flex-shrink: 0;
+  }
+  .toggle.on { background: var(--primary); }
+  .toggle::after {
+    content: '';
+    position: absolute;
+    top: 2px; left: 2px;
+    width: 20px; height: 20px;
+    background: white;
+    border-radius: 50%;
+    transition: transform 0.2s;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+  }
+  .toggle.on::after { transform: translateX(20px); }
+
+  /* ===== Bottom nav ===== */
+  nav {
+    display: flex;
+    background: var(--card);
+    border-top: 1px solid var(--border);
+    flex-shrink: 0;
+    padding: 8px 0 12px;
+    transition: background 0.3s;
+  }
+
+  .nav-btn {
+    flex: 1;
+    background: none;
+    border: none;
+    padding: 8px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+    color: var(--muted);
+    cursor: pointer;
+    font-size: 10px;
+    font-weight: 600;
+    transition: color 0.2s;
+    position: relative;
+  }
+  .nav-btn .nav-icon { font-size: 22px; }
+  .nav-btn.active { color: var(--primary); }
+
+  .nav-badge {
+    position: absolute;
+    top: 2px;
+    right: 25%;
+    background: var(--primary);
+    color: white;
+    min-width: 16px;
+    height: 16px;
+    border-radius: 8px;
+    font-size: 10px;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 4px;
+  }
+
+  /* ===== Modals ===== */
+  .modal-overlay {
+    position: absolute;
+    inset: 0;
+    background: rgba(0,0,0,0.7);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 100;
+    animation: fadeIn 0.3s;
+  }
+  .modal-overlay.show { display: flex; }
+
+  /* Match modal */
+  .match-modal {
+    text-align: center;
+    color: white;
+    padding: 20px;
+    animation: popIn 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+    max-width: 90%;
+  }
+
+  @keyframes popIn {
+    from { transform: scale(0.5); opacity: 0; }
+    to { transform: scale(1); opacity: 1; }
+  }
+
+  .match-title {
+    font-size: 48px;
+    font-weight: 900;
+    background: linear-gradient(135deg, #ff4d6d, #ffb3c1);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    margin-bottom: 20px;
+    letter-spacing: -1px;
+  }
+
+  .match-photos {
+    display: flex;
+    justify-content: center;
+    gap: 12px;
+    margin-bottom: 24px;
+  }
+  .match-photos img {
+    width: 110px; height: 110px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 4px solid white;
+  }
+
+  .match-text {
+    font-size: 16px;
+    margin-bottom: 24px;
+    opacity: 0.9;
+  }
+
+  .match-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .match-btn {
+    padding: 14px 40px;
+    border-radius: 24px;
+    border: none;
+    font-weight: 600;
+    font-size: 15px;
+    cursor: pointer;
+    transition: transform 0.15s;
+  }
+  .match-btn:active { transform: scale(0.95); }
+  .match-btn.primary { background: var(--primary); color: white; }
+  .match-btn.secondary { background: transparent; color: white; border: 2px solid white; }
+
+  /* Filter modal */
+  .filter-modal {
+    background: var(--card);
+    border-radius: 24px 24px 0 0;
+    padding: 24px;
+    width: 100%;
+    max-width: 420px;
+    position: absolute;
+    bottom: 0;
+    animation: slideUp 0.3s ease;
+    max-height: 85%;
+    overflow-y: auto;
+  }
+
+  @keyframes slideUp {
+    from { transform: translateY(100%); }
+    to { transform: translateY(0); }
+  }
+
+  .filter-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+  }
+  .filter-title { font-size: 20px; font-weight: 700; }
+  .filter-close {
+    background: none;
+    border: none;
+    font-size: 24px;
+    cursor: pointer;
+    color: var(--muted);
+  }
+
+  .filter-group {
+    margin-bottom: 24px;
+  }
+  .filter-label {
+    font-size: 13px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--muted);
+    margin-bottom: 10px;
+  }
+  .filter-options {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+  .filter-chip {
+    padding: 8px 16px;
+    border-radius: 20px;
+    border: 1.5px solid var(--border);
+    background: var(--card);
+    color: var(--text);
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .filter-chip.active {
+    background: var(--primary);
+    color: white;
+    border-color: var(--primary);
+  }
+
+  .range-wrap {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .range-wrap input[type="range"] {
+    flex: 1;
+    -webkit-appearance: none;
+    appearance: none;
+    height: 4px;
+    background: var(--border);
+    border-radius: 2px;
+    outline: none;
+  }
+  .range-wrap input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 20px; height: 20px;
+    background: var(--primary);
+    border-radius: 50%;
+    cursor: pointer;
+    box-shadow: 0 2px 6px rgba(255,77,109,0.4);
+  }
+  .range-wrap input[type="range"]::-moz-range-thumb {
+    width: 20px; height: 20px;
+    background: var(--primary);
+    border-radius: 50%;
+    cursor: pointer;
+    border: none;
+  }
+  .range-value {
+    min-width: 50px;
+    text-align: right;
+    font-weight: 600;
+    font-size: 14px;
+  }
+
+  .filter-apply {
+    width: 100%;
+    padding: 14px;
+    background: var(--primary);
+    color: white;
+    border: none;
+    border-radius: 24px;
+    font-weight: 600;
+    font-size: 15px;
+    cursor: pointer;
+    margin-top: 8px;
+  }
+
+  /* Photo viewer */
+  .photo-viewer {
+    position: absolute;
+    inset: 0;
+    background: black;
+    z-index: 200;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    animation: fadeIn 0.2s;
+  }
+  .photo-viewer.show { display: flex; }
+  .photo-viewer img {
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: contain;
+  }
+  .photo-viewer-close {
+    position: absolute;
+    top: 16px; right: 16px;
+    width: 40px; height: 40px;
+    background: rgba(255,255,255,0.2);
+    border: none;
+    border-radius: 50%;
+    color: white;
+    font-size: 20px;
+    cursor: pointer;
+  }
+  .photo-viewer-info {
+    position: absolute;
+    bottom: 20px;
+    left: 20px;
+    color: white;
+    font-size: 14px;
+    background: rgba(0,0,0,0.5);
+    padding: 6px 12px;
+    border-radius: 12px;
+  }
+
+  /* Chat modal */
+  .chat-modal {
+    position: absolute;
+    inset: 0;
+    background: var(--bg);
+    z-index: 100;
+    display: none;
+    flex-direction: column;
+  }
+  .chat-modal.show { display: flex; }
+
+  .chat-header {
+    padding: 14px 16px;
+    background: var(--card);
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    border-bottom: 1px solid var(--border);
+  }
+  .chat-header img {
+    width: 40px; height: 40px;
+    border-radius: 50%;
+    object-fit: cover;
+  }
+  .chat-header-name { font-weight: 600; flex: 1; }
+  .chat-header-status { font-size: 11px; color: var(--success); }
+  .chat-back, .chat-call {
+    background: none;
+    border: none;
+    font-size: 22px;
+    cursor: pointer;
+    color: var(--primary);
+    width: 36px; height: 36px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .chat-call { color: var(--success); }
+
+  .chat-messages {
+    flex: 1;
+    padding: 16px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .msg {
+    max-width: 75%;
+    padding: 10px 14px;
+    border-radius: 18px;
+    font-size: 14px;
+    line-height: 1.4;
+    animation: msgIn 0.2s;
+    word-wrap: break-word;
+  }
+  @keyframes msgIn {
+    from { opacity: 0; transform: translateY(4px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  .msg.them {
+    background: var(--card);
+    align-self: flex-start;
+    border-bottom-left-radius: 4px;
+  }
+  .msg.me {
+    background: var(--primary);
+    color: white;
+    align-self: flex-end;
+    border-bottom-right-radius: 4px;
+  }
+  .msg img {
+    max-width: 100%;
+    border-radius: 12px;
+    display: block;
+  }
+  .msg-time {
+    font-size: 10px;
+    opacity: 0.6;
+    margin-top: 4px;
+  }
+
+  .typing-indicator {
+    align-self: flex-start;
+    background: var(--card);
+    padding: 12px 14px;
+    border-radius: 18px;
+    border-bottom-left-radius: 4px;
+    display: none;
+    gap: 4px;
+  }
+  .typing-indicator.show { display: flex; }
+  .typing-dot {
+    width: 6px; height: 6px;
+    background: var(--muted);
+    border-radius: 50%;
+    animation: typingBounce 1.2s infinite;
+  }
+  .typing-dot:nth-child(2) { animation-delay: 0.2s; }
+  .typing-dot:nth-child(3) { animation-delay: 0.4s; }
+  @keyframes typingBounce {
+    0%, 60%, 100% { transform: translateY(0); opacity: 0.5; }
+    30% { transform: translateY(-6px); opacity: 1; }
+  }
+
+  .chat-input {
+    padding: 12px;
+    background: var(--card);
+    display: flex;
+    gap: 8px;
+    border-top: 1px solid var(--border);
+    align-items: center;
+    position: relative;
+  }
+  .chat-input input {
+    flex: 1;
+    padding: 10px 16px;
+    border-radius: 20px;
+    border: 1px solid var(--border);
+    background: var(--bg);
+    color: var(--text);
+    outline: none;
+    font-size: 14px;
+  }
+  .chat-input input:focus { border-color: var(--primary); }
+  .chat-send, .chat-emoji-btn, .chat-img-btn {
+    background: var(--primary);
+    color: white;
+    border: none;
+    width: 40px; height: 40px;
+    border-radius: 50%;
+    cursor: pointer;
+    font-size: 16px;
+    flex-shrink: 0;
+  }
+  .chat-emoji-btn, .chat-img-btn {
+    background: transparent;
+    color: var(--muted);
+    font-size: 20px;
+  }
+
+  .emoji-picker {
+    position: absolute;
+    bottom: 70px;
+    left: 12px;
+    right: 12px;
+    background: var(--card);
+    border-radius: 16px;
+    padding: 12px;
+    box-shadow: 0 -4px 20px rgba(0,0,0,0.15);
+    display: none;
+    grid-template-columns: repeat(8, 1fr);
+    gap: 4px;
+    max-height: 200px;
+    overflow-y: auto;
+  }
+  .emoji-picker.show { display: grid; }
+  .emoji-btn {
+    background: none;
+    border: none;
+    font-size: 22px;
+    cursor: pointer;
+    padding: 4px;
+    border-radius: 6px;
+    transition: background 0.1s;
+  }
+  .emoji-btn:hover { background: var(--bg-2); }
+
+  /* Confetti canvas */
+  #confettiCanvas {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    z-index: 150;
+  }
+
+  /* Onboarding */
+  .onboarding {
+    position: absolute;
+    inset: 0;
+    background: var(--bg);
+    z-index: 300;
+    display: none;
+    flex-direction: column;
+    padding: 40px 24px;
+    overflow-y: auto;
+  }
+  .onboarding.show { display: flex; }
+
+  .onb-step {
+    display: none;
+    flex-direction: column;
+    flex: 1;
+    animation: fadeIn 0.3s;
+  }
+  .onb-step.active { display: flex; }
+
+  .onb-progress {
+    display: flex;
+    gap: 6px;
+    margin-bottom: 32px;
+  }
+  .onb-dot {
+    flex: 1;
+    height: 4px;
+    background: var(--border);
+    border-radius: 2px;
+    transition: background 0.3s;
+  }
+  .onb-dot.done { background: var(--primary); }
+
+  .onb-emoji {
+    font-size: 64px;
+    text-align: center;
+    margin-bottom: 16px;
+  }
+  .onb-title {
+    font-size: 28px;
+    font-weight: 800;
+    text-align: center;
+    margin-bottom: 8px;
+    letter-spacing: -0.5px;
+  }
+  .onb-subtitle {
+    text-align: center;
+    color: var(--muted);
+    font-size: 14px;
+    margin-bottom: 32px;
+    line-height: 1.5;
+  }
+
+  .onb-input {
+    width: 100%;
+    padding: 14px 18px;
+    border: 1.5px solid var(--border);
+    border-radius: 14px;
+    background: var(--card);
+    color: var(--text);
+    font-size: 15px;
+    margin-bottom: 12px;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+  .onb-input:focus { border-color: var(--primary); }
+
+  .onb-options {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-bottom: 16px;
+  }
+  .onb-option {
+    padding: 16px;
+    border: 1.5px solid var(--border);
+    border-radius: 14px;
+    background: var(--card);
+    cursor: pointer;
+    text-align: center;
+    transition: all 0.15s;
+  }
+  .onb-option.selected {
+    border-color: var(--primary);
+    background: rgba(255,77,109,0.08);
+  }
+  .onb-option-emoji { font-size: 28px; margin-bottom: 4px; }
+  .onb-option-label { font-size: 13px; font-weight: 600; }
+
+  .onb-interests {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 16px;
+  }
+  .onb-interest {
+    padding: 8px 14px;
+    border: 1.5px solid var(--border);
+    border-radius: 20px;
+    background: var(--card);
+    cursor: pointer;
+    font-size: 13px;
+    transition: all 0.15s;
+  }
+  .onb-interest.selected {
+    border-color: var(--primary);
+    background: var(--primary);
+    color: white;
+  }
+
+  .onb-spacer { flex: 1; }
+
+  .onb-btn {
+    width: 100%;
+    padding: 16px;
+    background: var(--primary);
+    color: white;
+    border: none;
+    border-radius: 24px;
+    font-weight: 600;
+    font-size: 15px;
+    cursor: pointer;
+    margin-top: 16px;
+  }
+  .onb-btn.secondary {
+    background: transparent;
+    color: var(--muted);
+  }
+
+  /* Toast */
+  .toast {
+    position: absolute;
+    bottom: 80px;
+    left: 50%;
+    transform: translateX(-50%) translateY(20px);
+    background: var(--text);
+    color: var(--bg);
+    padding: 10px 20px;
+    border-radius: 20px;
+    font-size: 13px;
+    font-weight: 500;
+    opacity: 0;
+    transition: all 0.3s;
+    z-index: 250;
+    pointer-events: none;
+    white-space: nowrap;
+  }
+  .toast.show {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+
+  /* Scrollbar */
+  ::-webkit-scrollbar { width: 0; height: 0; }
+</style>
+</head>
+<body>
+
+<div class="app" id="app">
+  <!-- Onboarding -->
+  <div class="onboarding" id="onboarding">
+    <div class="onb-progress">
+      <div class="onb-dot" data-step="0"></div>
+      <div class="onb-dot" data-step="1"></div>
+      <div class="onb-dot" data-step="2"></div>
+      <div class="onb-dot" data-step="3"></div>
+    </div>
+
+    <!-- Step 1: Welcome -->
+    <div class="onb-step active" data-step="0">
+      <div class="onb-emoji">💘</div>
+      <div class="onb-title">Welcome to Spark</div>
+      <div class="onb-subtitle">Let's set up your profile in just a few steps. It only takes a minute!</div>
+      <div class="onb-spacer"></div>
+      <button class="onb-btn" onclick="nextStep()">Get Started</button>
+    </div>
+
+    <!-- Step 2: Basic info -->
+    <div class="onb-step" data-step="1">
+      <div class="onb-title">About you</div>
+      <div class="onb-subtitle">Tell us a bit about yourself</div>
+      <input type="text" class="onb-input" id="onbName" placeholder="First name" maxlength="20">
+      <input type="number" class="onb-input" id="onbAge" placeholder="Age" min="18" max="99">
+      <input type="text" class="onb-input" id="onbCity" placeholder="City" maxlength="30">
+      <div class="onb-spacer"></div>
+      <button class="onb-btn" onclick="nextStep()">Continue</button>
+    </div>
+
+    <!-- Step 3: Identity -->
+    <div class="onb-step" data-step="2">
+      <div class="onb-title">I am a...</div>
+      <div class="onb-subtitle">This helps us find your matches</div>
+      <div class="onb-options" id="genderOptions">
+        <div class="onb-option" data-value="woman">
+          <div class="onb-option-emoji">👩</div>
+          <div class="onb-option-label">Woman</div>
+        </div>
+        <div class="onb-option" data-value="man">
+          <div class="onb-option-emoji">👨</div>
+          <div class="onb-option-label">Man</div>
+        </div>
+        <div class="onb-option" data-value="nonbinary">
+          <div class="onb-option-emoji">🧑</div>
+          <div class="onb-option-label">Non-binary</div>
+        </div>
+        <div class="onb-option" data-value="other">
+          <div class="onb-option-emoji">✨</div>
+          <div class="onb-option-label">Other</div>
+        </div>
+      </div>
+      <div class="onb-spacer"></div>
+      <button class="onb-btn" onclick="nextStep()">Continue</button>
+    </div>
+
+    <!-- Step 4: Interests -->
+    <div class="onb-step" data-step="3">
+      <div class="onb-title">Your interests</div>
+      <div class="onb-subtitle">Pick at least 3 things you love</div>
+      <div class="onb-interests" id="interestOptions"></div>
+      <div class="onb-spacer"></div>
+      <button class="onb-btn" onclick="finishOnboarding()">Start Swiping 💘</button>
+    </div>
+  </div>
+
+  <header>
+    <div class="logo">
+      <div class="logo-icon">💘</div>
+      <span>Spark</span>
+    </div>
+    <div class="header-btns">
+      <button class="header-btn" id="filterBtn" title="Filters">⚙️</button>
+    </div>
+  </header>
+
+  <main>
+    <!-- Discover -->
+    <section class="screen active" id="screen-discover">
+      <div class="card-stack" id="cardStack"></div>
+      <div class="actions">
+        <button class="action-btn undo" id="btnUndo" title="Undo (←)">↶</button>
+        <button class="action-btn nope" id="btnNope" title="Pass (←)">✕</button>
+        <button class="action-btn super" id="btnSuper" title="Super Like (↑)">⭐</button>
+        <button class="action-btn like" id="btnLike" title="Like (→)">♥</button>
+        <button class="action-btn boost" id="btnBoost" title="Boost">⚡</button>
+      </div>
+    </section>
+
+    <!-- Likes You -->
+    <section class="screen" id="screen-likes">
+      <div class="likes-header">
+        <div class="likes-title">Likes You</div>
+        <div class="likes-count" id="likesCount">0</div>
+      </div>
+      <div class="likes-grid" id="likesGrid"></div>
+    </section>
+
+    <!-- Matches -->
+    <section class="screen" id="screen-matches">
+      <div class="matches-header">New Matches</div>
+      <div class="new-matches" id="newMatches"></div>
+      <div class="matches-header" style="padding-top: 8px;">Messages</div>
+      <div class="chat-list" id="chatList"></div>
+      <div class="empty" id="emptyMatches" style="display:none;">
+        <div class="empty-icon">💌</div>
+        <h3>No matches yet</h3>
+        <p>Keep swiping to find your perfect match!</p>
+      </div>
+    </section>
+
+    <!-- Profile -->
+    <section class="screen" id="screen-profile">
+      <div class="profile-card">
+        <div class="profile-avatar-wrap">
+          <img class="profile-avatar" id="profileAvatar" src="" alt="">
+          <button class="profile-edit-btn" id="editProfileBtn">✎</button>
+        </div>
+        <div class="profile-name" id="profileName">You <span class="verified-badge">✓</span></div>
+        <div class="profile-age" id="profileAge">25 · New York</div>
+        <div class="completion-bar"><div class="completion-fill" id="completionFill" style="width: 0%"></div></div>
+        <div class="completion-text" id="completionText">Profile 0% complete</div>
+        <div class="profile-stats">
+          <div class="stat">
+            <div class="stat-num" id="statLikes">0</div>
+            <div class="stat-label">Likes</div>
+          </div>
+          <div class="stat">
+            <div class="stat-num" id="statMatches">0</div>
+            <div class="stat-label">Matches</div>
+          </div>
+          <div class="stat">
+            <div class="stat-num" id="statSuper">0</div>
+            <div class="stat-label">Super</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="settings">
+        <div class="setting-item" id="settingDistance">
+          <label><span class="setting-icon">📍</span> Distance</label>
+          <span style="color: var(--muted); font-size: 13px;" id="distanceVal">25 mi</span>
+        </div>
+        <div class="setting-item" id="settingAge">
+          <label><span class="setting-icon">🎂</span> Age Range</label>
+          <span style="color: var(--muted); font-size: 13px;" id="ageVal">21-35</span>
+        </div>
+        <div class="setting-item">
+          <label><span class="setting-icon">🔔</span> Notifications</label>
+          <div class="toggle on" data-toggle="notif"></div>
+        </div>
+        <div class="setting-item">
+          <label><span class="setting-icon">🌙</span> Dark Mode</label>
+          <div class="toggle" data-toggle="dark"></div>
+        </div>
+        <div class="setting-item">
+          <label><span class="setting-icon">👁️</span> Show on Spark</label>
+          <div class="toggle on" data-toggle="visible"></div>
+        </div>
+        <div class="setting-item">
+          <label><span class="setting-icon">🌍</span> Global</label>
+          <div class="toggle" data-toggle="global"></div>
+        </div>
+        <div class="setting-item" id="resetBtn">
+          <label><span class="setting-icon">🔄</span> Reset App</label>
+          <span style="color: var(--muted); font-size: 13px;">›</span>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <nav>
+    <button class="nav-btn active" data-screen="discover">
+      <span class="nav-icon">🔥</span>
+      <span>Discover</span>
+    </button>
+    <button class="nav-btn" data-screen="likes">
+      <span class="nav-icon">💖</span>
+      <span>Likes</span>
+      <span class="nav-badge" id="likesBadge" style="display:none;">0</span>
+    </button>
+    <button class="nav-btn" data-screen="matches">
+      <span class="nav-icon">💬</span>
+      <span>Matches</span>
+      <span class="nav-badge" id="matchesBadge" style="display:none;">0</span>
+    </button>
+    <button class="nav-btn" data-screen="profile">
+      <span class="nav-icon">👤</span>
+      <span>Profile</span>
+    </button>
+  </nav>
+
+  <!-- Match modal -->
+  <div class="modal-overlay" id="matchModal">
+    <div class="match-modal">
+      <div class="match-title">It's a Match!</div>
+      <div class="match-photos">
+        <img id="matchPhotoYou" src="" alt="">
+        <img id="matchPhotoThem" src="" alt="">
+      </div>
+      <div class="match-text" id="matchText">You and someone liked each other</div>
+      <div class="match-actions">
+        <button class="match-btn primary" id="matchSendMsg">Send a Message</button>
+        <button class="match-btn secondary" id="matchKeepSwiping">Keep Swiping</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Filter modal -->
+  <div class="modal-overlay" id="filterModal">
+    <div class="filter-modal">
+      <div class="filter-header">
+        <div class="filter-title">Filters</div>
+        <button class="filter-close" id="filterClose">×</button>
+      </div>
+      <div class="filter-group">
+        <div class="filter-label">Interested in</div>
+        <div class="filter-options" id="filterGender">
+          <div class="filter-chip" data-value="woman">Women</div>
+          <div class="filter-chip" data-value="man">Men</div>
+          <div class="filter-chip" data-value="everyone">Everyone</div>
+        </div>
+      </div>
+      <div class="filter-group">
+        <div class="filter-label">Age range</div>
+        <div class="range-wrap">
+          <input type="range" id="ageMin" min="18" max="60" value="21">
+          <span class="range-value" id="ageMinVal">21</span>
+        </div>
+        <div class="range-wrap" style="margin-top: 8px;">
+          <input type="range" id="ageMax" min="18" max="60" value="35">
+          <span class="range-value" id="ageMaxVal">35</span>
+        </div>
+      </div>
+      <div class="filter-group">
+        <div class="filter-label">Maximum distance</div>
+        <div class="range-wrap">
+          <input type="range" id="distRange" min="1" max="100" value="25">
+          <span class="range-value" id="distVal">25 mi</span>
+        </div>
+      </div>
+      <div class="filter-group">
+        <div class="filter-label">Show me</div>
+        <div class="filter-options" id="filterVerified">
+          <div class="filter-chip" data-value="all">All profiles</div>
+          <div class="filter-chip" data-value="verified">Verified only</div>
+        </div>
+      </div>
+      <button class="filter-apply" id="filterApply">Apply Filters</button>
+    </div>
+  </div>
+
+  <!-- Photo viewer -->
+  <div class="photo-viewer" id="photoViewer">
+    <button class="photo-viewer-close" id="photoViewerClose">×</button>
+    <img id="photoViewerImg" src="" alt="">
+    <div class="photo-viewer-info" id="photoViewerInfo"></div>
+  </div>
+
+  <!-- Chat modal -->
+  <div class="chat-modal" id="chatModal">
+    <div class="chat-header">
+      <button class="chat-back" id="chatBack">‹</button>
+      <img id="chatAvatar" src="" alt="">
+      <div style="flex: 1;">
+        <div class="chat-header-name" id="chatName">Name</div>
+        <div class="chat-header-status">● Online now</div>
+      </div>
+      <button class="chat-call" title="Video call">📹</button>
+    </div>
+    <div class="chat-messages" id="chatMessages"></div>
+    <div class="typing-indicator" id="typingIndicator">
+      <div class="typing-dot"></div>
+      <div class="typing-dot"></div>
+      <div class="typing-dot"></div>
+    </div>
+    <div class="emoji-picker" id="emojiPicker"></div>
+    <form class="chat-input" id="chatForm">
+      <button type="button" class="chat-emoji-btn" id="emojiToggle">😊</button>
+      <input type="text" id="chatInput" placeholder="Type a message..." autocomplete="off">
+      <button type="button" class="chat-img-btn" id="imgBtn" title="Send photo">🖼️</button>
+      <button type="submit" class="chat-send">➤</button>
+    </form>
+  </div>
+
+  <!-- Confetti -->
+  <canvas id="confettiCanvas"></canvas>
+
+  <!-- Toast -->
+  <div class="toast" id="toast"></div>
+</div>
+
+<script>
+  // ===== Data =====
+  const ALL_INTERESTS = ["Travel","Coffee","Yoga","Art","Food","Music","Dogs","Tacos","Photography","Beach","Dancing","Wine","Movies","Tech","Gaming","Cooking","Concerts","Fitness","Hiking","Books","Writing","Cats","Surfing","Skiing","Gaming","Running"];
+
+  const profiles = [
+    { id: 1, name: "Emma", age: 24, location: "2 miles away", distance: 2, gender: "woman", verified: true, photos: ["emma1","emma2","emma3","emma4"], bio: "Coffee addict ☕ | Book lover 📚 | Weekend hiker", tags: ["Travel", "Coffee", "Yoga", "Books"] },
+    { id: 2, name: "Sophia", age: 27, location: "5 miles away", distance: 5, gender: "woman", verified: false, photos: ["sophia1","sophia2","sophia3"], bio: "Artist by day, foodie by night 🎨🍜", tags: ["Art", "Food", "Music"] },
+    { id: 3, name: "Olivia", age: 26, location: "1 mile away", distance: 1, gender: "woman", verified: true, photos: ["olivia1","olivia2","olivia3","olivia4","olivia5"], bio: "Dog mom 🐕 · Yoga enthusiast · Let's grab tacos!", tags: ["Dogs", "Yoga", "Tacos"] },
+    { id: 4, name: "Ava", age: 23, location: "8 miles away", distance: 8, gender: "woman", verified: false, photos: ["ava1","ava2","ava3"], bio: "Photographer capturing moments 📸 ✨", tags: ["Photography", "Travel", "Beach"] },
+    { id: 5, name: "Isabella", age: 28, location: "3 miles away", distance: 3, gender: "woman", verified: true, photos: ["isabella1","isabella2","isabella3","isabella4"], bio: "Lawyer by day, salsa dancer by night 💃", tags: ["Dancing", "Wine", "Movies"] },
+    { id: 6, name: "Mia", age: 25, location: "4 miles away", distance: 4, gender: "woman", verified: false, photos: ["mia1","mia2","mia3"], bio: "Software engineer who loves board games 🎲", tags: ["Tech", "Gaming", "Coffee"] },
+    { id: 7, name: "Charlotte", age: 29, location: "6 miles away", distance: 6, gender: "woman", verified: true, photos: ["charlotte1","charlotte2","charlotte3","charlotte4"], bio: "Chef in training 🍳 Looking for a taste tester", tags: ["Cooking", "Food", "Travel"] },
+    { id: 8, name: "Amelia", age: 22, location: "2 miles away", distance: 2, gender: "woman", verified: false, photos: ["amelia1","amelia2","amelia3"], bio: "Music student 🎸 Let's go to a concert!", tags: ["Music", "Concerts", "Art"] },
+    { id: 9, name: "Harper", age: 26, location: "7 miles away", distance: 7, gender: "woman", verified: true, photos: ["harper1","harper2","harper3","harper4"], bio: "Fitness coach · Adventure seeker · Dog person 🏔️", tags: ["Fitness", "Hiking", "Dogs"] },
+    { id: 10, name: "Evelyn", age: 24, location: "3 miles away", distance: 3, gender: "woman", verified: false, photos: ["evelyn1","evelyn2","evelyn3"], bio: "Writer ✍️ · Tea over coffee · Cat person", tags: ["Books", "Writing", "Cats"] },
+    { id: 11, name: "Liam", age: 27, location: "4 miles away", distance: 4, gender: "man", verified: true, photos: ["liam1","liam2","liam3","liam4"], bio: "Architect · Coffee snob · Weekend cyclist 🚴", tags: ["Coffee", "Fitness", "Travel"] },
+    { id: 12, name: "Noah", age: 29, location: "6 miles away", distance: 6, gender: "man", verified: false, photos: ["noah1","noah2","noah3"], bio: "Chef · Foodie · Looking for my taste tester", tags: ["Cooking", "Food", "Wine"] },
+    { id: 13, name: "Ethan", age: 25, location: "2 miles away", distance: 2, gender: "man", verified: true, photos: ["ethan1","ethan2","ethan3","ethan4"], bio: "Musician 🎸 · Dog dad · Beach bum", tags: ["Music", "Dogs", "Beach"] },
+    { id: 14, name: "Lucas", age: 26, location: "5 miles away", distance: 5, gender: "man", verified: false, photos: ["lucas1","lucas2","lucas3"], bio: "Photographer · Traveler · Adventure seeker", tags: ["Photography", "Travel", "Hiking"] },
+    { id: 15, name: "Mason", age: 28, location: "3 miles away", distance: 3, gender: "man", verified: true, photos: ["mason1","mason2","mason3","mason4"], bio: "Engineer by day, gamer by night 🎮", tags: ["Tech", "Gaming", "Movies"] }
+  ];
+
+  const autoReplies = [
+    "Hey! How's your day going? 😊",
+    "Haha nice! What do you do for fun?",
+    "That's so cool! I love that too",
+    "Want to grab coffee sometime? ☕",
+    "Tell me more about yourself!",
+    "I was just thinking the same thing",
+    "You seem really interesting 😄",
+    "What's your favorite place you've traveled?",
+    "I'm free this weekend if you want to hang out",
+    "Haha you're funny!",
+    "Same here! We have so much in common",
+    "What kind of music are you into?",
+    "I just got back from a hike, feeling great 🏔️",
+    "That sounds amazing!",
+    "I'd love to hear more about that"
+  ];
+
+  const emojis = ["😊","😍","🥰","😘","😂","🤣","😎","🥳","😇","🤩","😋","😜","🤗","🤔","😏","😴","🤤","😷","🤒","🤕","🤠","🥸","🤡","👻","💀","👽","🤖","💩","😈","👿","❤️","🧡","💛","💚","💙","💜","🖤","🤍","💔","❣️","💕","💞","💓","💗","💖","💘","💝","💟","🔥","✨","⭐","🌟","💫","🎉","🎊","🎈","🌹","🌸","🌺","🌻","🌷","💐","🍕","🍔","🍟","🌮","🍣","🍜","🍩","🍰","🍪","☕","🍷","🍺","🍹","🥂","👍","👎","👏","🙌","🙏","💪","✌️","🤞","🤟","🤘","👌","🤏","✋","🖐️","👋"];
+
+  // ===== State =====
+  let state = {
+    onboarded: false,
+    user: { name: "You", age: 25, city: "New York", gender: "woman", interests: [] },
+    filters: { gender: "everyone", ageMin: 21, ageMax: 35, distance: 25, verified: "all" },
+    currentIndex: 0,
+    matches: [],
+    likesYou: [],
+    likes: 0,
+    superLikes: 0,
+    history: [],
+    boostsUsed: 0,
+    darkMode: false
+  };
+
+  try {
+    const saved = JSON.parse(localStorage.getItem('sparkState2'));
+    if (saved) state = { ...state, ...saved };
+  } catch(e) {}
+
+  function saveState() {
+    localStorage.setItem('sparkState2', JSON.stringify(state));
+  }
+
+  // ===== Theme =====
+  function applyTheme() {
+    document.documentElement.setAttribute('data-theme', state.darkMode ? 'dark' : 'light');
+  }
+  applyTheme();
+
+  // ===== Onboarding =====
+  const onboarding = document.getElementById('onboarding');
+  let onbStep = 0;
+
+  function showOnboarding() {
+    if (state.onboarded) return;
+    onboarding.classList.add('show');
+    renderInterests();
+  }
+
+  function renderInterests() {
+    const container = document.getElementById('interestOptions');
+    container.innerHTML = ALL_INTERESTS.map(i =>
+      `<div class="onb-interest" data-value="${i}">${i}</div>`
+    ).join('');
+    container.querySelectorAll('.onb-interest').forEach(el => {
+      el.addEventListener('click', () => {
+        el.classList.toggle('selected');
+      });
+    });
+  }
+
+  function nextStep() {
+    if (onbStep === 1) {
+      const name = document.getElementById('onbName').value.trim();
+      const age = parseInt(document.getElementById('onbAge').value);
+      const city = document.getElementById('onbCity').value.trim();
+      if (!name || !age || !city) {
+        showToast('Please fill in all fields');
+        return;
+      }
+      if (age < 18 || age > 99) {
+        showToast('Please enter a valid age');
+        return;
+      }
+      state.user.name = name;
+      state.user.age = age;
+      state.user.city = city;
+    }
+    if (onbStep === 2) {
+      const selected = document.querySelector('#genderOptions .onb-option.selected');
+      if (!selected) {
+        showToast('Please select an option');
+        return;
+      }
+      state.user.gender = selected.dataset.value;
+    }
+    if (onbStep === 3) {
+      const selected = document.querySelectorAll('#interestOptions .onb-interest.selected');
+      if (selected.length < 3) {
+        showToast(`Pick at least 3 (${selected.length} selected)`);
+        return;
+      }
+      state.user.interests = Array.from(selected).map(el => el.dataset.value);
+    }
+
+    document.querySelectorAll('.onb-step').forEach(s => s.classList.remove('active'));
+    onbStep++;
+    document.querySelector(`.onb-step[data-step="${onbStep}"]`).classList.add('active');
+    document.querySelectorAll('.onb-dot').forEach((d, i) => {
+      d.classList.toggle('done', i <= onbStep);
+    });
+  }
+
+  function finishOnboarding() {
+    const selected = document.querySelectorAll('#interestOptions .onb-interest.selected');
+    if (selected.length < 3) {
+      showToast(`Pick at least 3 (${selected.length} selected)`);
+      return;
+    }
+    state.user.interests = Array.from(selected).map(el => el.dataset.value);
+    state.onboarded = true;
+    generateLikesYou();
+    saveState();
+    onboarding.classList.remove('show');
+    renderCards();
+    renderProfile();
+    showToast(`Welcome, ${state.user.name}! 💘`);
+  }
+
+  function generateLikesYou() {
+    // Generate 8 "people who liked you" - 3 revealed, 5 blurred
+    const shuffled = [...profiles].sort(() => Math.random() - 0.5);
+    state.likesYou = shuffled.slice(0, 8).map((p, i) => ({
+      profileId: p.id,
+      revealed: i < 3
+    }));
+  }
+
+  // ===== Screen Navigation =====
+  const screens = document.querySelectorAll('.screen');
+  const navBtns = document.querySelectorAll('.nav-btn');
+
+  function switchScreen(name) {
+    screens.forEach(s => s.classList.toggle('active', s.id === `screen-${name}`));
+    navBtns.forEach(b => b.classList.toggle('active', b.dataset.screen === name));
+    if (name === 'matches') renderMatches();
+    if (name === 'profile') renderProfile();
+    if (name === 'likes') renderLikesYou();
+  }
+
+  navBtns.forEach(btn => {
+    btn.addEventListener('click', () => switchScreen(btn.dataset.screen));
+  });
+
+  // ===== Filtering =====
+  function getFilteredProfiles() {
+    return profiles.filter(p => {
+      if (state.filters.gender !== 'everyone' && p.gender !== state.filters.gender) return false;
+      if (p.age < state.filters.ageMin || p.age > state.filters.ageMax) return false;
+      if (p.distance > state.filters.distance) return false;
+      if (state.filters.verified === 'verified' && !p.verified) return false;
+      return true;
+    });
+  }
+
+  // ===== Compatibility =====
+  function getCompatibility(profile) {
+    const userInterests = new Set(state.user.interests || []);
+    const profileInterests = new Set(profile.tags);
+    let shared = 0;
+    profileInterests.forEach(t => { if (userInterests.has(t)) shared++; });
+    const base = 50 + (shared * 12);
+    // Add deterministic variation based on profile id
+    const variation = ((profile.id * 7) % 20) - 10;
+    return Math.min(99, Math.max(40, base + variation));
+  }
+
+  // ===== Card Stack =====
+  const cardStack = document.getElementById('cardStack');
+  let dragState = null;
+  let currentPhotoIndex = 0;
+
+  function renderCards() {
+    cardStack.innerHTML = '';
+    const filtered = getFilteredProfiles();
+    const remaining = filtered.slice(state.currentIndex);
+
+    if (remaining.length === 0) {
+      cardStack.innerHTML = `
+        <div class="empty">
+          <div class="empty-icon">🌟</div>
+          <h3>No more profiles</h3>
+          <p>You've seen everyone matching your filters. Try adjusting them or check back later!</p>
+          <button onclick="resetProfiles()">Reset & Start Over</button>
+        </div>
+      `;
+      updateUndoButton();
+      return;
+    }
+
+    const toShow = remaining.slice(0, 3).reverse();
+    toShow.forEach((profile, i) => {
+      const isTop = i === toShow.length - 1;
+      const card = document.createElement('div');
+      card.className = 'card';
+      card.dataset.id = profile.id;
+      card.style.zIndex = i + 1;
+      if (!isTop) {
+        card.style.transform = `scale(${1 - (toShow.length - 1 - i) * 0.04}) translateY(${(toShow.length - 1 - i) * 8}px)`;
+      }
+
+      const compat = getCompatibility(profile);
+      const photos = profile.photos.map((seed, idx) =>
+        `<img class="card-photo ${idx === 0 ? 'active' : ''}" src="https://picsum.photos/seed/${seed}/600/800" alt="${profile.name}" draggable="false" data-idx="${idx}">`
+      ).join('');
+      const dots = profile.photos.map((_, idx) =>
+        `<div class="photo-dot ${idx === 0 ? 'active' : ''}" data-idx="${idx}"></div>`
+      ).join('');
+
+      card.innerHTML = `
+        <div class="card-carousel">
+          ${photos}
+          <div class="photo-dots">${dots}</div>
+          ${isTop ? '<div class="tap-zone left"></div><div class="tap-zone right"></div>' : ''}
+        </div>
+        <div class="compat-badge">💫 ${compat}% match</div>
+        <div class="card-info">
+          <div class="card-name">
+            ${profile.name} <span class="age">${profile.age}</span>
+            ${profile.verified ? '<span class="verified-badge">✓</span>' : ''}
+          </div>
+          <div class="card-location">📍 ${profile.location}</div>
+          <div class="card-bio">${profile.bio}</div>
+          <div class="card-tags">${profile.tags.map(t => `<span class="tag">${t}</span>`).join('')}</div>
+        </div>
+        <div class="stamp like">LIKE</div>
+        <div class="stamp nope">NOPE</div>
+        <div class="stamp super">SUPER</div>
+      `;
+
+      if (isTop) {
+        currentPhotoIndex = 0;
+        attachSwipe(card, profile);
+        attachPhotoNav(card, profile);
+      }
+      cardStack.appendChild(card);
+    });
+    updateUndoButton();
+  }
+
+  function attachPhotoNav(card, profile) {
+    const photos = card.querySelectorAll('.card-photo');
+    const dots = card.querySelectorAll('.photo-dot');
+    const tapLeft = card.querySelector('.tap-zone.left');
+    const tapRight = card.querySelector('.tap-zone.right');
+
+    function showPhoto(idx) {
+      if (idx < 0 || idx >= photos.length) return;
+      currentPhotoIndex = idx;
+      photos.forEach((p, i) => p.classList.toggle('active', i === idx));
+      dots.forEach((d, i) => d.classList.toggle('active', i === idx));
+    }
+
+    tapLeft.addEventListener('click', (e) => {
+      e.stopPropagation();
+      if (currentPhotoIndex > 0) showPhoto(currentPhotoIndex - 1);
+    });
+    tapRight.addEventListener('click', (e) => {
+      e.stopPropagation();
+      if (currentPhotoIndex < photos.length - 1) showPhoto(currentPhotoIndex + 1);
+    });
+
+    // Long press to view photo
+    let pressTimer = null;
+    photos.forEach((p, idx) => {
+      p.addEventListener('click', (e) => {
+        // Only open viewer on single tap on middle area
+        const rect = card.getBoundingClientRect();
+        const x = e.clientX - rect.left;
+        const w = rect.width;
+        if (x > w * 0.33 && x < w * 0.66) {
+          openPhotoViewer(profile, idx);
+        }
+      });
+    });
+
+    card.showPhoto = showPhoto;
+  }
+
+  function openPhotoViewer(profile, idx) {
+    const viewer = document.getElementById('photoViewer');
+    const img = document.getElementById('photoViewerImg');
+    const info = document.getElementById('photoViewerInfo');
+    img.src = `https://picsum.photos/seed/${profile.photos[idx]}/800/1000`;
+    info.textContent = `${profile.name}, ${profile.age} · ${idx + 1}/${profile.photos.length}`;
+    viewer.classList.add('show');
+  }
+
+  document.getElementById('photoViewerClose').addEventListener('click', () => {
+    document.getElementById('photoViewer').classList.remove('show');
+  });
+
+  function attachSwipe(card, profile) {
+    const stampLike = card.querySelector('.stamp.like');
+    const stampNope = card.querySelector('.stamp.nope');
+    const stampSuper = card.querySelector('.stamp.super');
+
+    const onStart = (e) => {
+      const point = e.touches ? e.touches[0] : e;
+      dragState = {
+        startX: point.clientX,
+        startY: point.clientY,
+        currentX: 0,
+        currentY: 0,
+        card,
+        profile,
+        stampLike,
+        stampNope,
+        stampSuper,
+        startTime: Date.now()
+      };
+      card.style.transition = 'none';
+    };
+
+    const onMove = (e) => {
+      if (!dragState) return;
+      const point = e.touches ? e.touches[0] : e;
+      dragState.currentX = point.clientX - dragState.startX;
+      dragState.currentY = point.clientY - dragState.startY;
+
+      const rot = dragState.currentX / 15;
+      card.style.transform = `translate(${dragState.currentX}px, ${dragState.currentY}px) rotate(${rot}deg)`;
+
+      const threshold = 80;
+      if (dragState.currentY < -80) {
+        stampSuper.style.opacity = Math.min((-dragState.currentY - 80) / 60, 1);
+        stampLike.style.opacity = 0;
+        stampNope.style.opacity = 0;
+      } else if (dragState.currentX > threshold) {
+        stampLike.style.opacity = Math.min((dragState.currentX - threshold) / 60, 1);
+        stampNope.style.opacity = 0;
+        stampSuper.style.opacity = 0;
+      } else if (dragState.currentX < -threshold) {
+        stampNope.style.opacity = Math.min((-dragState.currentX - threshold) / 60, 1);
+        stampLike.style.opacity = 0;
+        stampSuper.style.opacity = 0;
+      } else {
+        stampLike.style.opacity = 0;
+        stampNope.style.opacity = 0;
+        stampSuper.style.opacity = 0;
+      }
+    };
+
+    const onEnd = () => {
+      if (!dragState) return;
+      card.style.transition = 'transform 0.3s ease';
+      const threshold = 120;
+
+      if (dragState.currentY < -threshold) {
+        flyOut(card, 0, -1, () => handleSuperLike(dragState.profile));
+      } else if (dragState.currentX > threshold) {
+        flyOut(card, 1, 0, () => handleLike(dragState.profile, false));
+      } else if (dragState.currentX < -threshold) {
+        flyOut(card, -1, 0, () => handleNope(dragState.profile));
+      } else {
+        card.style.transform = '';
+        stampLike.style.opacity = 0;
+        stampNope.style.opacity = 0;
+        stampSuper.style.opacity = 0;
+      }
+      dragState = null;
+    };
+
+    card.addEventListener('mousedown', onStart);
+    card.addEventListener('touchstart', onStart, { passive: true });
+    window.addEventListener('mousemove', onMove);
+    window.addEventListener('touchmove', onMove, { passive: true });
+    window.addEventListener('mouseup', onEnd);
+    window.addEventListener('touchend', onEnd);
+  }
+
+  function flyOut(card, dirX, dirY, cb) {
+    card.style.transition = 'transform 0.4s ease, opacity 0.4s ease';
+    const tx = dirX * 600;
+    const ty = dirY * -600;
+    card.style.transform = `translate(${tx}px, ${ty}px) rotate(${dirX * 30}deg)`;
+    card.style.opacity = '0';
+    setTimeout(() => {
+      state.currentIndex++;
+      saveState();
+      renderCards();
+      if (cb) cb();
+    }, 400);
+  }
+
+  function handleLike(profile, isSuper = false) {
+    state.likes++;
+    if (isSuper) state.superLikes++;
+    state.history.push({ type: 'like', profileId: profile.id, super: isSuper, time: Date.now() });
+
+    // Reveal one blurred like-you if any
+    const blurred = state.likesYou.find(l => !l.revealed);
+    if (blurred) {
+      blurred.revealed = true;
+      updateLikesBadge();
+    }
+
+    // 60% chance of match (80% for super like)
+    const matchChance = isSuper ? 0.8 : 0.6;
+    if (Math.random() < matchChance) {
+      state.matches.push({
+        profileId: profile.id,
+        messages: [{ from: 'them', text: `Hey! Nice to match with you 😊`, time: Date.now(), unread: true }],
+        isNew: true
+      });
+      saveState();
+      updateMatchesBadge();
+      showMatchModal(profile);
+      playMatchSound();
+      launchConfetti();
+    } else {
+      saveState();
+      showToast(isSuper ? 'Super Liked! ⭐' : 'Liked! 💖');
+    }
+  }
+
+  function handleSuperLike(profile) {
+    handleLike(profile, true);
+  }
+
+  function handleNope(profile) {
+    state.history.push({ type: 'nope', profileId: profile.id, time: Date.now() });
+    saveState();
+  }
+
+  // ===== Undo =====
+  function updateUndoButton() {
+    const btn = document.getElementById('btnUndo');
+    btn.classList.toggle('disabled', state.history.length === 0 || state.currentIndex === 0);
+  }
+
+  document.getElementById('btnUndo').addEventListener('click', () => {
+    if (state.history.length === 0 || state.currentIndex === 0) return;
+    const last = state.history.pop();
+    state.currentIndex--;
+    if (last.type === 'like') {
+      state.likes--;
+      if (last.super) state.superLikes--;
+      // Remove from matches if it was a match
+      const matchIdx = state.matches.findIndex(m => m.profileId === last.profileId);
+      if (matchIdx !== -1) state.matches.splice(matchIdx, 1);
+    }
+    saveState();
+    renderCards();
+    updateMatchesBadge();
+    updateLikesBadge();
+    showToast('Undone ↶');
+  });
+
+  // ===== Action Buttons =====
+  document.getElementById('btnLike').addEventListener('click', () => {
+    const top = cardStack.querySelector('.card:last-child');
+    if (!top) return;
+    const profile = getFilteredProfiles()[state.currentIndex];
+    if (!profile) return;
+    flyOut(top, 1, 0, () => handleLike(profile, false));
+  });
+
+  document.getElementById('btnNope').addEventListener('click', () => {
+    const top = cardStack.querySelector('.card:last-child');
+    if (!top) return;
+    const profile = getFilteredProfiles()[state.currentIndex];
+    if (!profile) return;
+    flyOut(top, -1, 0, () => handleNope(profile));
+  });
+
+  document.getElementById('btnSuper').addEventListener('click', () => {
+    const top = cardStack.querySelector('.card:last-child');
+    if (!top) return;
+    const profile = getFilteredProfiles()[state.currentIndex];
+    if (!profile) return;
+    flyOut(top, 0, -1, () => handleSuperLike(profile));
+  });
+
+  document.getElementById('btnBoost').addEventListener('click', () => {
+    state.boostsUsed++;
+    saveState();
+    showToast('⚡ Profile boosted for 30 minutes!');
+    launchConfetti();
+  });
+
+  // ===== Keyboard shortcuts =====
+  document.addEventListener('keydown', (e) => {
+    if (document.querySelector('.chat-modal.show') || document.querySelector('.modal-overlay.show') || document.querySelector('.photo-viewer.show')) return;
+    if (!document.querySelector('#screen-discover.active')) return;
+
+    const top = cardStack.querySelector('.card:last-child');
+    if (!top) return;
+    const profile = getFilteredProfiles()[state.currentIndex];
+    if (!profile) return;
+
+    if (e.key === 'ArrowRight') {
+      e.preventDefault();
+      flyOut(top, 1, 0, () => handleLike(profile, false));
+    } else if (e.key === 'ArrowLeft') {
+      e.preventDefault();
+      flyOut(top, -1, 0, () => handleNope(profile));
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      flyOut(top, 0, -1, () => handleSuperLike(profile));
+    } else if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      document.getElementById('btnUndo').click();
+    }
+  });
+
+  // ===== Matches Screen =====
+  function renderMatches() {
+    const newMatchesEl = document.getElementById('newMatches');
+    const chatList = document.getElementById('chatList');
+    const emptyEl = document.getElementById('emptyMatches');
+
+    if (state.matches.length === 0) {
+      newMatchesEl.style.display = 'none';
+      chatList.style.display = 'none';
+      emptyEl.style.display = 'flex';
+      return;
+    }
+
+    emptyEl.style.display = 'none';
+    newMatchesEl.style.display = 'flex';
+    chatList.style.display = 'flex';
+
+    newMatchesEl.innerHTML = state.matches.map(m => {
+      const p = profiles.find(pr => pr.id === m.profileId);
+      return `
+        <div class="new-match" data-id="${p.id}">
+          <img class="new-match-img" src="https://picsum.photos/seed/${p.photos[0]}/200" alt="${p.name}">
+          ${m.isNew ? '<div class="new-badge">!</div>' : ''}
+          <div class="new-match-name">${p.name}</div>
+        </div>
+      `;
+    }).join('');
+
+    chatList.innerHTML = state.matches.map(m => {
+      const p = profiles.find(pr => pr.id === m.profileId);
+      const lastMsg = m.messages[m.messages.length - 1];
+      const preview = lastMsg.from === 'me' ? `You: ${lastMsg.text}` : lastMsg.text;
+      const timeStr = formatTime(lastMsg.time);
+      const hasUnread = m.messages.some(msg => msg.unread && msg.from === 'them');
+      return `
+        <div class="chat-item" data-id="${p.id}">
+          <div style="position: relative;">
+            <img class="chat-avatar" src="https://picsum.photos/seed/${p.photos[0]}/200" alt="${p.name}">
+            ${Math.random() > 0.5 ? '<div class="online-dot"></div>' : ''}
+          </div>
+          <div class="chat-info">
+            <div class="chat-name">${p.name} ${p.verified ? '<span class="verified-badge" style="width:16px;height:16px;font-size:10px;">✓</span>' : ''}</div>
+            <div class="chat-preview">${escapeHtml(preview)}</div>
+          </div>
+          <div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px;">
+            <div class="chat-time">${timeStr}</div>
+            ${hasUnread ? '<div class="unread-dot"></div>' : ''}
+          </div>
+        </div>
+      `;
+    }).join('');
+
+    newMatchesEl.querySelectorAll('.new-match').forEach(el => {
+      el.addEventListener('click', () => {
+        const id = parseInt(el.dataset.id);
+        const m = state.matches.find(x => x.profileId === id);
+        if (m) m.isNew = false;
+        saveState();
+        openChat(id);
+      });
+    });
+    chatList.querySelectorAll('.chat-item').forEach(el => {
+      el.addEventListener('click', () => {
+        const id = parseInt(el.dataset.id);
+        const m = state.matches.find(x => x.profileId === id);
+        if (m) m.messages.forEach(msg => { if (msg.from === 'them') msg.unread = false; });
+        saveState();
+        openChat(id);
+      });
+    });
+  }
+
+  function formatTime(ts) {
+    const diff = Date.now() - ts;
+    const mins = Math.floor(diff / 60000);
+    if (mins < 1) return 'now';
+    if (mins < 60) return `${mins}m`;
+    const hrs = Math.floor(mins / 60);
+    if (hrs < 24) return `${hrs}h`;
+    return `${Math.floor(hrs / 24)}d`;
+  }
+
+  function escapeHtml(s) {
+    return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  }
+
+  function updateMatchesBadge() {
+    const badge = document.getElementById('matchesBadge');
+    const unread = state.matches.reduce((acc, m) => acc + m.messages.filter(msg => msg.unread && msg.from === 'them').length, 0);
+    if (unread > 0) {
+      badge.textContent = unread > 9 ? '9+' : unread;
+      badge.style.display = 'flex';
+    } else {
+      badge.style.display = 'none';
+    }
+  }
+
+  // ===== Likes You Screen =====
+  function renderLikesYou() {
+    const grid = document.getElementById('likesGrid');
+    const count = document.getElementById('likesCount');
+    count.textContent = state.likesYou.length;
+
+    grid.innerHTML = state.likesYou.map(l => {
+      const p = profiles.find(pr => pr.id === l.profileId);
+      if (l.revealed) {
+        return `
+          <div class="likes-card" data-id="${p.id}">
+            <img src="https://picsum.photos/seed/${p.photos[0]}/400/500" alt="${p.name}">
+            <div class="likes-card-info">
+              <div class="likes-card-name">${p.name}, ${p.age}</div>
+            </div>
+          </div>
+        `;
+      } else {
+        return `
+          <div class="likes-card blurred" data-premium="true">
+            <img src="https://picsum.photos/seed/${p.photos[0]}/400/500" alt="">
+            <div class="premium-lock">🔒 Premium</div>
+            <div class="likes-card-info">
+              <div class="likes-card-name">???, ${p.age}</div>
+            </div>
+          </div>
+        `;
+      }
+    }).join('');
+
+    grid.querySelectorAll('.likes-card').forEach(el => {
+      el.addEventListener('click', () => {
+        if (el.dataset.premium) {
+          showToast('🔒 Upgrade to Spark Gold to see who likes you!');
+        } else {
+          const id = parseInt(el.dataset.id);
+          // Find and like them back
+          const p = profiles.find(pr => pr.id === id);
+          if (p) {
+            showToast(`You liked ${p.name} back! 💖`);
+            // Check if match
+            if (Math.random() < 0.7) {
+              state.matches.push({
+                profileId: p.id,
+                messages: [{ from: 'them', text: `Hey! I liked you first 😊`, time: Date.now(), unread: true }],
+                isNew: true
+              });
+              saveState();
+              updateMatchesBadge();
+              setTimeout(() => {
+                showMatchModal(p);
+                playMatchSound();
+                launchConfetti();
+              }, 300);
+            }
+          }
+        }
+      });
+    });
+  }
+
+  function updateLikesBadge() {
+    const badge = document.getElementById('likesBadge');
+    const blurred = state.likesYou.filter(l => !l.revealed).length;
+    if (blurred > 0) {
+      badge.textContent = blurred;
+      badge.style.display = 'flex';
+    } else {
+      badge.style.display = 'none';
+    }
+  }
+
+  // ===== Match Modal =====
+  const matchModal = document.getElementById('matchModal');
+  let currentMatchProfile = null;
+
+  function showMatchModal(profile) {
+    currentMatchProfile = profile;
+    document.getElementById('matchPhotoYou').src = `https://picsum.photos/seed/${state.user.name}/200`;
+    document.getElementById('matchPhotoThem').src = `https://picsum.photos/seed/${profile.photos[0]}/200`;
+    document.getElementById('matchText').textContent = `You and ${profile.name} liked each other!`;
+    matchModal.classList.add('show');
+  }
+
+  document.getElementById('matchKeepSwiping').addEventListener('click', () => {
+    matchModal.classList.remove('show');
+  });
+
+  document.getElementById('matchSendMsg').addEventListener('click', () => {
+    matchModal.classList.remove('show');
+    if (currentMatchProfile) openChat(currentMatchProfile.id);
+  });
+
+  // ===== Chat =====
+  const chatModal = document.getElementById('chatModal');
+  let currentChatId = null;
+
+  function openChat(profileId) {
+    currentChatId = profileId;
+    const profile = profiles.find(p => p.id === profileId);
+    document.getElementById('chatAvatar').src = `https://picsum.photos/seed/${profile.photos[0]}/200`;
+    document.getElementById('chatName').textContent = profile.name;
+    renderMessages();
+    chatModal.classList.add('show');
+  }
+
+  function renderMessages() {
+    const match = state.matches.find(m => m.profileId === currentChatId);
+    const container = document.getElementById('chatMessages');
+    container.innerHTML = match.messages.map(m => {
+      let content = '';
+      if (m.image) {
+        content = `<img src="${m.image}" alt="shared image">`;
+      } else {
+        content = escapeHtml(m.text);
+      }
+      return `<div class="msg ${m.from}">${content}<div class="msg-time">${formatTime(m.time)}</div></div>`;
+    }).join('');
+    container.scrollTop = container.scrollHeight;
+  }
+
+  document.getElementById('chatBack').addEventListener('click', () => {
+    chatModal.classList.remove('show');
+    document.getElementById('emojiPicker').classList.remove('show');
+    currentChatId = null;
+    renderMatches();
+  });
+
+  document.getElementById('chatForm').addEventListener('submit', (e) => {
+    e.preventDefault();
+    const input = document.getElementById('chatInput');
+    const text = input.value.trim();
+    if (!text || !currentChatId) return;
+
+    const match = state.matches.find(m => m.profileId === currentChatId);
+    match.messages.push({ from: 'me', text, time: Date.now() });
+    input.value = '';
+    saveState();
+    renderMessages();
+    document.getElementById('emojiPicker').classList.remove('show');
+
+    simulateReply(match);
+  });
+
+  function simulateReply(match) {
+    const typing = document.getElementById('typingIndicator');
+    typing.classList.add('show');
+    const messagesEl = document.getElementById('chatMessages');
+    messagesEl.scrollTop = messagesEl.scrollHeight;
+
+    setTimeout(() => {
+      typing.classList.remove('show');
+      const reply = autoReplies[Math.floor(Math.random() * autoReplies.length)];
+      match.messages.push({ from: 'them', text: reply, time: Date.now(), unread: currentChatId !== match.profileId });
+      saveState();
+      if (currentChatId === match.profileId) {
+        renderMessages();
+      } else {
+        updateMatchesBadge();
+      }
+    }, 1200 + Math.random() * 1500);
+  }
+
+  // Emoji picker
+  const emojiPicker = document.getElementById('emojiPicker');
+  emojiPicker.innerHTML = emojis.map(e => `<button type="button" class="emoji-btn" data-emoji="${e}">${e}</button>`).join('');
+  emojiPicker.querySelectorAll('.emoji-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const input = document.getElementById('chatInput');
+      input.value += btn.dataset.emoji;
+      input.focus();
+    });
+  });
+
+  document.getElementById('emojiToggle').addEventListener('click', () => {
+    emojiPicker.classList.toggle('show');
+  });
+
+  // Image share
+  document.getElementById('imgBtn').addEventListener('click', () => {
+    if (!currentChatId) return;
+    const match = state.matches.find(m => m.profileId === currentChatId);
+    const seed = 'shared' + Date.now();
+    match.messages.push({
+      from: 'me',
+      image: `https://picsum.photos/seed/${seed}/400/400`,
+      time: Date.now()
+    });
+    saveState();
+    renderMessages();
+    simulateReply(match);
+  });
+
+  document.getElementById('chatCall').addEventListener('click', () => {
+    showToast('📹 Video calls coming soon!');
+  });
+
+  // ===== Profile =====
+  function renderProfile() {
+    document.getElementById('profileAvatar').src = `https://picsum.photos/seed/${state.user.name}/200`;
+    document.getElementById('profileName').innerHTML = `${state.user.name} <span class="verified-badge">✓</span>`;
+    document.getElementById('profileAge').textContent = `${state.user.age} · ${state.user.city}`;
+    document.getElementById('statLikes').textContent = state.likes;
+    document.getElementById('statMatches').textContent = state.matches.length;
+    document.getElementById('statSuper').textContent = state.superLikes;
+
+    // Completion calculation
+    let completion = 0;
+    if (state.user.name && state.user.name !== 'You') completion += 20;
+    if (state.user.age) completion += 20;
+    if (state.user.city) completion += 20;
+    if (state.user.interests && state.user.interests.length >= 3) completion += 20;
+    if (state.user.gender) completion += 20;
+    document.getElementById('completionFill').style.width = completion + '%';
+    document.getElementById('completionText').textContent = `Profile ${completion}% complete`;
+
+    document.getElementById('distanceVal').textContent = state.filters.distance + ' mi';
+    document.getElementById('ageVal').textContent = `${state.filters.ageMin}-${state.filters.ageMax}`;
+
+    // Dark mode toggle state
+    const darkToggle = document.querySelector('[data-toggle="dark"]');
+    if (darkToggle) darkToggle.classList.toggle('on', state.darkMode);
+  }
+
+  document.getElementById('editProfileBtn').addEventListener('click', () => {
+    state.onboarded = false;
+    saveState();
+    location.reload();
+  });
+
+  // Toggles
+  document.querySelectorAll('.toggle').forEach(t => {
+    t.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const key = t.dataset.toggle;
+      if (key === 'dark') {
+        state.darkMode = !state.darkMode;
+        applyTheme();
+      }
+      t.classList.toggle('on');
+      saveState();
+    });
+  });
+
+  // ===== Filters =====
+  const filterModal = document.getElementById('filterModal');
+  document.getElementById('filterBtn').addEventListener('click', () => {
+    filterModal.classList.add('show');
+    // Set current values
+    document.querySelectorAll('#filterGender .filter-chip').forEach(c => {
+      c.classList.toggle('active', c.dataset.value === state.filters.gender);
+    });
+    document.querySelectorAll('#filterVerified .filter-chip').forEach(c => {
+      c.classList.toggle('active', c.dataset.value === state.filters.verified);
+    });
+    document.getElementById('ageMin').value = state.filters.ageMin;
+    document.getElementById('ageMax').value = state.filters.ageMax;
+    document.getElementById('distRange').value = state.filters.distance;
+    document.getElementById('ageMinVal').textContent = state.filters.ageMin;
+    document.getElementById('ageMaxVal').textContent = state.filters.ageMax;
+    document.getElementById('distVal').textContent = state.filters.distance + ' mi';
+  });
+
+  document.getElementById('filterClose').addEventListener('click', () => {
+    filterModal.classList.remove('show');
+  });
+
+  document.querySelectorAll('#filterGender .filter-chip').forEach(c => {
+    c.addEventListener('click', () => {
+      document.querySelectorAll('#filterGender .filter-chip').forEach(x => x.classList.remove('active'));
+      c.classList.add('active');
+    });
+  });
+  document.querySelectorAll('#filterVerified .filter-chip').forEach(c => {
+    c.addEventListener('click', () => {
+      document.querySelectorAll('#filterVerified .filter-chip').forEach(x => x.classList.remove('active'));
+      c.classList.add('active');
+    });
+  });
+
+  document.getElementById('ageMin').addEventListener('input', (e) => {
+    document.getElementById('ageMinVal').textContent = e.target.value;
+    const max = document.getElementById('ageMax');
+    if (parseInt(e.target.value) > parseInt(max.value)) max.value = e.target.value;
+    document.getElementById('ageMaxVal').textContent = max.value;
+  });
+  document.getElementById('ageMax').addEventListener('input', (e) => {
+    document.getElementById('ageMaxVal').textContent = e.target.value;
+    const min = document.getElementById('ageMin');
+    if (parseInt(e.target.value) < parseInt(min.value)) min.value = e.target.value;
+    document.getElementById('ageMinVal').textContent = min.value;
+  });
+  document.getElementById('distRange').addEventListener('input', (e) => {
+    document.getElementById('distVal').textContent = e.target.value + ' mi';
+  });
+
+  document.getElementById('filterApply').addEventListener('click', () => {
+    const genderEl = document.querySelector('#filterGender .filter-chip.active');
+    const verifiedEl = document.querySelector('#filterVerified .filter-chip.active');
+    state.filters.gender = genderEl ? genderEl.dataset.value : 'everyone';
+    state.filters.verified = verifiedEl ? verifiedEl.dataset.value : 'all';
+    state.filters.ageMin = parseInt(document.getElementById('ageMin').value);
+    state.filters.ageMax = parseInt(document.getElementById('ageMax').value);
+    state.filters.distance = parseInt(document.getElementById('distRange').value);
+    state.currentIndex = 0;
+    saveState();
+    filterModal.classList.remove('show');
+    renderCards();
+    renderProfile();
+    showToast('Filters applied ✓');
+  });
+
+  document.getElementById('settingDistance').addEventListener('click', () => {
+    filterModal.classList.add('show');
+  });
+  document.getElementById('settingAge').addEventListener('click', () => {
+    filterModal.classList.add('show');
+  });
+
+  // ===== Reset =====
+  document.getElementById('resetBtn').addEventListener('click', () => {
+    if (confirm('Reset all data and start over?')) {
+      localStorage.removeItem('sparkState2');
+      location.reload();
+    }
+  });
+
+  window.resetProfiles = function() {
+    state.currentIndex = 0;
+    saveState();
+    renderCards();
+  };
+
+  // ===== Toast =====
+  let toastTimer = null;
+  function showToast(msg) {
+    const toast = document.getElementById('toast');
+    toast.textContent = msg;
+    toast.classList.add('show');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => toast.classList.remove('show'), 2500);
+  }
+
+  // ===== Confetti =====
+  const confettiCanvas = document.getElementById('confettiCanvas');
+  const ctx = confettiCanvas.getContext('2d');
+  let confettiParticles = [];
+
+  function resizeConfetti() {
+    const app = document.getElementById('app');
+    confettiCanvas.width = app.offsetWidth;
+    confettiCanvas.height = app.offsetHeight;
+  }
+  resizeConfetti();
+  window.addEventListener('resize', resizeConfetti);
+
+  function launchConfetti() {
+    const colors = ['#ff4d6d', '#ff8fa3', '#ffb3c1', '#ffd700', '#22c55e', '#3b82f6', '#a855f7'];
+    for (let i = 0; i < 80; i++) {
+      confettiParticles.push({
+        x: confettiCanvas.width / 2,
+        y: confettiCanvas.height / 2,
+        vx: (Math.random() - 0.5) * 15,
+        vy: (Math.random() - 1) * 15 - 5,
+        size: Math.random() * 6 + 4,
+        color: colors[Math.floor(Math.random() * colors.length)],
+        rotation: Math.random() * 360,
+        rotSpeed: (Math.random() - 0.5) * 10,
+        life: 1
+      });
+    }
+    if (!confettiRunning) animateConfetti();
+  }
+
+  let confettiRunning = false;
+  function animateConfetti() {
+    confettiRunning = true;
+    ctx.clearRect(0, 0, confettiCanvas.width, confettiCanvas.height);
+    confettiParticles.forEach(p => {
+      p.x += p.vx;
+      p.y += p.vy;
+      p.vy += 0.3;
+      p.rotation += p.rotSpeed;
+      p.life -= 0.008;
+      ctx.save();
+      ctx.translate(p.x, p.y);
+      ctx.rotate(p.rotation * Math.PI / 180);
+      ctx.globalAlpha = Math.max(0, p.life);
+      ctx.fillStyle = p.color;
+      ctx.fillRect(-p.size/2, -p.size/2, p.size, p.size * 0.6);
+      ctx.restore();
+    });
+    confettiParticles = confettiParticles.filter(p => p.life > 0 && p.y < confettiCanvas.height);
+    if (confettiParticles.length > 0) {
+      requestAnimationFrame(animateConfetti);
+    } else {
+      confettiRunning = false;
+      ctx.clearRect(0, 0, confettiCanvas.width, confettiCanvas.height);
+    }
+  }
+
+  // ===== Match sound =====
+  function playMatchSound() {
+    try {
+      const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      const notes = [523.25, 659.25, 783.99]; // C, E, G
+      notes.forEach((freq, i) => {
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.frequency.value = freq;
+        osc.type = 'sine';
+        gain.gain.setValueAtTime(0, audioCtx.currentTime + i * 0.1);
+        gain.gain.linearRampToValueAtTime(0.2, audioCtx.currentTime + i * 0.1 + 0.02);
+        gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + i * 0.1 + 0.3);
+        osc.start(audioCtx.currentTime + i * 0.1);
+        osc.stop(audioCtx.currentTime + i * 0.1 + 0.3);
+      });
+    } catch(e) {}
+  }
+
+  // ===== Init =====
+  function init() {
+    applyTheme();
+    if (!state.onboarded) {
+      showOnboarding();
+    } else {
+      if (state.likesYou.length === 0) generateLikesYou();
+      renderCards();
+      renderProfile();
+      updateMatchesBadge();
+      updateLikesBadge();
+    }
+  }
+
+  init();
+</script>
+
+</body>
+</html>

@@ -1,0 +1,103 @@
+{
+  "xp": 0,
+  "level": 2,
+  "gems": 120,
+  "xp_to_next_level": 150,
+  "streak": 4,
+  "match_count": 0,
+  "super_like_count": 0,
+  "theme": "dark",
+  "sound_on": true,
+  "last_login": "2026-06-22",
+  "player_name": "Adventurer",
+  "player_bio": "Looking for my player 2",
+  "player_avatar": "\ud83e\udddd\u200d\u2642\ufe0f",
+  "equipped_border": "none",
+  "equipped_theme": "default",
+  "inventory": {
+    "avatars": [
+      "\ud83e\udddd\u200d\u2642\ufe0f",
+      "\ud83e\uddd9",
+      "\ud83e\udddb",
+      "\ud83e\uddda",
+      "\ud83e\uddb8",
+      "\ud83e\udd77",
+      "\ud83d\udc51"
+    ],
+    "borders": [
+      "none",
+      "gold",
+      "rainbow",
+      "fire"
+    ],
+    "card_themes": [
+      "default",
+      "forest",
+      "ocean",
+      "galaxy"
+    ]
+  },
+  "achievements": [
+    {
+      "id": "first_match",
+      "name": "First Blood",
+      "desc": "Get your first match",
+      "icon": "\ud83e\ude78",
+      "unlocked": false
+    },
+    {
+      "id": "level_5",
+      "name": "Getting Serious",
+      "desc": "Reach Level 5",
+      "icon": "\u2b50",
+      "unlocked": false
+    },
+    {
+      "id": "super_5",
+      "name": "Shooting Star",
+      "desc": "Use 5 Super Likes",
+      "icon": "\ud83c\udf20",
+      "unlocked": false,
+      "progress": 0,
+      "target": 5
+    },
+    {
+      "id": "streak_7",
+      "name": "On Fire",
+      "desc": "Maintain a 7-day streak",
+      "icon": "\ud83d\udd25",
+      "unlocked": false
+    },
+    {
+      "id": "rich",
+      "name": "Gem Collector",
+      "desc": "Accumulate 500 gems",
+      "icon": "\ud83d\udcb0",
+      "unlocked": false
+    }
+  ],
+  "quests": [
+    {
+      "name": "Cast 5 Roses",
+      "target": 5,
+      "current": 0,
+      "reward": 20,
+      "done": false
+    },
+    {
+      "name": "Find 1 Soulmate",
+      "target": 1,
+      "current": 0,
+      "reward": 50,
+      "done": false
+    },
+    {
+      "name": "Play 1 Icebreaker",
+      "target": 1,
+      "current": 0,
+      "reward": 30,
+      "done": false
+    }
+  ],
+  "messages": {}
+}
